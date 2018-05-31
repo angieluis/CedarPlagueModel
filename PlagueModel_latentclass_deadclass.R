@@ -9,17 +9,17 @@ library(deSolve)
 SIR.model=function(t,x,params){
   b=params["b"]           # biting rate of fleas
   mu=params["mu"]		      # natural mortality rate of rodent (uninfected) (mu_r in fig)
-  pep=params["pep"]       # Proportion of ep fleas that transmit
-  ppb=params["ppb"]       # Proportion of partially blocked fleas that transmit
-  pb=params["pb"]         # Proportion of fully blocked fleas that transmit
+  p_ep=params["p_ep"]       # Proportion of ep fleas that transmit
+  p_pb=params["p_pb"]       # Proportion of partially blocked fleas that transmit
+  p_b=params["p_b"]         # Proportion of fully blocked fleas that transmit
   gamma=params["gamma"]		# recovery rate in rodent from low-dose flea infection
   epsilon=params["epsilon"]  #disease induced mortality rate in rodent from high-dose flea infection
   sigma=params["sigma"]   # rate to become infectious from latent class
   
   alpha=params["alpha"]   # proportion of fleas infected from host
-  muf=params["muf"]       # natural mortality of flea
-  mupb=params["mupb"]     # mortality of partially blocked flea
-  mub=params["mub"]       # mortality of blocked flea
+  mu_f=params["mu_f"]       # natural mortality of flea
+  mu_pb=params["mu_pb"]     # mortality of partially blocked flea
+  mu_b=params["mu_b"]       # mortality of blocked flea
   
   lambdaA=params["lambdaA"] # rate of developing partial blockage from EP
   lambdaB=params["lambdaB"] # rate of clearing infection in EP (back to uninfected)
@@ -46,18 +46,18 @@ SIR.model=function(t,x,params){
   beta=(b*S*Ipb*ppb)+(b*S*Ib*pb)
   
   
-  dS = -(beta + (b*S*Iep*pep))-mu*S   #Susceptible Rodent Pop
-  dL = (beta + (b*S*0.1*Iep*pep)) - L*sigma  #infection of host, not yet infectious
+  dS = -(beta + (b*S*Iep*p_ep))-mu*S   #Susceptible Rodent Pop
+  dL = (beta + (b*S*0.1*Iep*p_ep)) - L*sigma  #infection of host, not yet infectious
   dI = sigma*L - I*epsilon  #infectious rodent hosts
-  dE = (b*S*0.9*Iep*pep) - E*(mu+gamma) #exposed rodents (non-infectious)
+  dE = (b*S*0.9*Iep*p_ep) - E*(mu+gamma) #exposed rodents (non-infectious)
   dR = gamma*E - R*mu  #recovery of rodent
   dr = mu*(S+R+E) + epsilon*I  #dead rodents
     
   dU = -I*(U*b*alpha) + (0.21*Iep*lambdaB) -U*muf    #Uninfected Flea pop
-  dIep = (I*(U*b*alpha)) - ((0.21*Iep*lambdaB) + (0.13*Iep*lambdaC) + (0.66*Iep*lambdaA) + Iep*muf) #Infection of early phase fleas 
-  dIpb = 0.66*Iep*lambdaA - Ipb*(tau+mupb) #Infection of partially blocked fleas
+  dIep = (I*(U*b*alpha)) - ((0.21*Iep*lambdaB) + (0.13*Iep*lambdaC) + (0.66*Iep*lambdaA) + Iep*mu_f) #Infection of early phase fleas 
+  dIpb = 0.66*Iep*lambdaA - Ipb*(tau+mu_pb) #Infection of partially blocked fleas
   dIb = tau*Ipb - mub*Ib  #Infection of fully blocked fleas
-  df = muf*(U+Iep) + (mupb*Ipb) + mub*Ib + 0.13*Iep*lambdaC #dead fleas
+  df = m_uf*(U+Iep) + (mu_pb*Ipb) + mu_b*Ib + 0.13*Iep*lambdaC #dead fleas
   
   list(c(dS,dL,dI,dE,dR,dr, dU,dIep,dIpb,dIb,df))
   
@@ -71,20 +71,20 @@ xstart=c(S=9, L=0, I=0, E=0, R=0, dr=0, U=90, Iep=10, Ipb=0, Ib=0, df=0)	#beginn
 parms=c(         # all parameter values are specified in days
   b=.48,              # biting rate of fleas 
   mu=1/365,           # natural mortality rate of rodent (uninfected)
-  pep=2/83,           # Proportion of ep fleas that transmit
-  ppb=5/26,           # Proportion of partially blocked fleas that transmit
-  pb=10/20,           # Proportion of fully blocked fleas that transmit
+  p_ep=2/83,           # Proportion of ep fleas that transmit
+  p_pb=5/26,           # Proportion of partially blocked fleas that transmit
+  p_b=10/20,           # Proportion of fully blocked fleas that transmit
   sigma=1/2.6,        # rate to become infectious from latent class
   gamma=1/7,          # recovery rate in rodent from low-dose flea infection
   epsilon=1/2,        # disease induced mortality rate in rodent from high-dose flea infection
-  muf=1/20.6,         # natural mortality of flea
+  mu_f=1/20.6,         # natural mortality of flea
   alpha=19/20,        # proportion of fleas infected from host
   lambdaA=1/5.05,     # rate of developing partial blockage from EP
   lambdaB=1/3,        # rate of clearing infection in EP (back to uninfected)
   lambdaC=1/3,        # rate of leaving EP (still infected but not enough to block)
-  mupb=1/12.3,        # mortality of partially blocked flea
+  mu_pb=1/12.3,        # mortality of partially blocked flea
   tau=1/4.8,          # rate of developing full blockage
-  mub=1/6)	          # mortality of blocked flea
+  mu_b=1/6)	          # mortality of blocked flea
 
 out=lsoda(xstart, times, SIR.model, parms)  #run the model
 
