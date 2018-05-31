@@ -52,11 +52,11 @@ SIR.model=function(t,x,params){
   dR = gamma*E - R*mu  # recovered rodents
   dr = mu*(S+R+E) + epsilon*I  #dead rodents
     
-  dU = -b*alpha*U*I + (0.21*Iep*lambdaB) - U*mu_f #### Need to change these constants to parameters (proportion of Iep fleas that do the 3 diff things, sum to 1)   #Uninfected Flea pop
-  dIep = b*alpha*U*I - ((0.21*Iep*lambdaB) + (0.13*Iep*lambdaC) + (0.66*Iep*lambdaA) + Iep*mu_f) #Infection of early phase fleas 
-  dIpb = 0.66*Iep*lambdaA - Ipb*(tau+mu_pb) #Infection of partially blocked fleas
+  dU = -b*alpha*U*I + (Iep*lambdaB) - U*mu_f #### Need to change these constants to parameters (proportion of Iep fleas that do the 3 diff things, sum to 1)   #Uninfected Flea pop
+  dIep = b*alpha*U*I - ((Iep*lambdaB) + (Iep*lambdaC) + (Iep*lambdaA) + Iep*mu_f) #Infection of early phase fleas 
+  dIpb = Iep*lambdaA - Ipb*(tau+mu_pb) #Infection of partially blocked fleas
   dIb = tau*Ipb - mu_b*Ib  #Infection of fully blocked fleas
-  df = mu_f*(U+Iep) + (mu_pb*Ipb) + mu_b*Ib + 0.13*Iep*lambdaC # lost fleas
+  df = mu_f*(U+Iep) + (mu_pb*Ipb) + mu_b*Ib + Iep*lambdaC # lost fleas
   
   list(c(dS,dL,dI,dE,dR,dr, dU,dIep,dIpb,dIb,df))
   
