@@ -1,6 +1,6 @@
 ###############################################################################
 ### Model for Plague by Cedar Mitchell Spring 2017
-### Exploring the importance of early-phase in transmission
+### Exploring the importance of early-phase vs blocked fleas in transmission
 ###############################################################################
 
 
@@ -45,8 +45,6 @@ SIR.model=function(t,x,params){
   df=x[11]
   
   
-  
-  
   dS = -S*(b*p_pb*Ipb + b_b*p_b*Ib + b*p_ep*Iep) - mu*S   #Susceptible Rodent Pop
   dL = S*(b*p_pb*Ipb + b_b*p_b*Ib + b*p_ep*Iep*rho) - L*sigma  # doesn't have death here (-mu*L)   #infection of host, not yet infectious
   dI = sigma*L - I*epsilon  #infectious rodent hosts
@@ -54,11 +52,11 @@ SIR.model=function(t,x,params){
   dR = gamma*E - R*mu  # recovered rodents
   dr = mu*(S+R+E) + epsilon*I  #dead rodents
     
-  dU = -I*(U*b*alpha) + (0.21*Iep*lambdaB) -U*muf    #Uninfected Flea pop
-  dIep = (I*(U*b*alpha)) - ((0.21*Iep*lambdaB) + (0.13*Iep*lambdaC) + (0.66*Iep*lambdaA) + Iep*mu_f) #Infection of early phase fleas 
+  dU = -b*alpha*U*I + (0.21*Iep*lambdaB) - U*mu_f #### Need to change these constants to parameters (proportion of Iep fleas that do the 3 diff things, sum to 1)   #Uninfected Flea pop
+  dIep = b*alpha*U*I - ((0.21*Iep*lambdaB) + (0.13*Iep*lambdaC) + (0.66*Iep*lambdaA) + Iep*mu_f) #Infection of early phase fleas 
   dIpb = 0.66*Iep*lambdaA - Ipb*(tau+mu_pb) #Infection of partially blocked fleas
-  dIb = tau*Ipb - mub*Ib  #Infection of fully blocked fleas
-  df = m_uf*(U+Iep) + (mu_pb*Ipb) + mu_b*Ib + 0.13*Iep*lambdaC #dead fleas
+  dIb = tau*Ipb - mu_b*Ib  #Infection of fully blocked fleas
+  df = mu_f*(U+Iep) + (mu_pb*Ipb) + mu_b*Ib + 0.13*Iep*lambdaC # lost fleas
   
   list(c(dS,dL,dI,dE,dR,dr, dU,dIep,dIpb,dIb,df))
   
@@ -70,7 +68,7 @@ times=seq(1,30,by=0.3)					#time steps to output
 xstart=c(S=9, L=0, I=0, E=0, R=0, dr=0, U=90, Iep=10, Ipb=0, Ib=0, df=0)	#beginning population sizes
 
 parms=c(         # all parameter values are specified in days
-  b=.48,              # biting rate of fleas (uninfected,early-phase, & partially blocked)
+  b=0.48,             # biting rate of fleas (uninfected,early-phase, & partially blocked)
   b_b=0.9,            # biting rate of blocked fleas 
   mu=1/365,           # natural mortality rate of rodent (uninfected)
   p_ep=2/83,          # Proportion of ep fleas that transmit
@@ -79,12 +77,13 @@ parms=c(         # all parameter values are specified in days
   sigma=1/2.6,        # rate to become infectious from latent class
   gamma=1/7,          # recovery rate in rodent from low-dose flea infection
   epsilon=1/2,        # disease induced mortality rate in rodent from high-dose flea infection
-  mu_f=1/20.6,         # natural mortality of flea
+  rho=0.1,
+  mu_f=1/20.6,        # natural mortality of flea
   alpha=19/20,        # proportion of fleas infected from host
   lambdaA=1/5.05,     # rate of developing partial blockage from EP
   lambdaB=1/3,        # rate of clearing infection in EP (back to uninfected)
   lambdaC=1/3,        # rate of leaving EP (still infected but not enough to block)
-  mu_pb=1/12.3,        # mortality of partially blocked flea
+  mu_pb=1/12.3,       # mortality of partially blocked flea
   tau=1/4.8,          # rate of developing full blockage
   mu_b=1/6)	          # mortality of blocked flea
 
@@ -125,5 +124,5 @@ title(main="Flea Dynamics")
 
 legend(25,100,c("U","Iep","Ipb","Ib","df"),col=c("burlywood1","darkgreen","plum2","orchid4","grey66"),bty="n",lty=c(2,1,1,1,4),lwd=2,x.intersp = 1, y.intersp = 0.75)
 out
-colors() #many color options
+
 
