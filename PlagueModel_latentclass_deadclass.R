@@ -52,7 +52,7 @@ SIR.model=function(t,x,params){
   dR = gamma*E - R*mu  # recovered rodents
   dr = mu*(S+R+E) + epsilon*I  #dead rodents
     
-  dU = -b*alpha*U*I + (Iep*lambdaB) - U*mu_f #### Need to change these constants to parameters (proportion of Iep fleas that do the 3 diff things, sum to 1)   #Uninfected Flea pop
+  dU = -b*alpha*U*I + (Iep*lambdaB) - U*mu_f   #Uninfected Flea pop
   dIep = b*alpha*U*I - ((Iep*lambdaB) + (Iep*lambdaC) + (Iep*lambdaA) + Iep*mu_f) #Infection of early phase fleas 
   dIpb = Iep*lambdaA - Ipb*(tau+mu_pb) #Infection of partially blocked fleas
   dIb = tau*Ipb - mu_b*Ib  #Infection of fully blocked fleas
@@ -119,7 +119,7 @@ rat.parms=c(         # all parameter values are specified in days
   epsilon=0.8,        # disease induced mortality rate in rodent from high-dose flea infection
   rho=0.21,
   mu_f=0.029,        # natural mortality of flea
-  alpha=1,        # proportion of fleas infected from host
+  alpha=1,           # proportion of fleas infected from host
   lambdaA=0.044,     # rate of developing partial blockage from EP
   lambdaB=0.007,     # rate of clearing infection in EP (back to uninfected)
   lambdaC=0.058,     # rate of leaving EP (still infected but not enough to block)
@@ -209,4 +209,4 @@ plot(N_f,R0,type="l",ylim=c(0,2.5))
 lines(N_f,R0_ep,col="blue")
 lines(N_f,R0_pb,col="green")
 lines(N_f,R0_b,col="red")
-legend("topleft",c("full","blocked","partially blocked","earlyphase"))
+legend("topleft",c("all modes","blocked","partially blocked","early-phase"),col=c("black","red","green","blue"),lty=1,bty="n")
