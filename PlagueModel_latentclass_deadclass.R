@@ -165,7 +165,48 @@ title(main="Flea Dynamics")
 legend(25,100,c("U","Iep","Ipb","Ib","df"),col=c("burlywood1","darkgreen","plum2","orchid4","grey66"),bty="n",lty=c(2,1,1,1,4),lwd=2,x.intersp = 1, y.intersp = 0.75)
 out
 
-N_f
-N_r
-R0 <- with(as.list(mouse.parms), ((b*rho*p_ep + b*p_pb + b_b*p_b)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * (S+L+I+E+R) * (U+Iep+Ipb+Ib))
 
+
+
+
+################################################### R0
+
+#mouse
+N_f = 1:20
+N_r = 1
+R0 <- with(as.list(mouse.parms), sqrt(((b*rho*p_ep + b*p_pb + b_b*p_b)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * N_r * N_f))
+
+R0_ep <- with(as.list(mouse.parms), sqrt(((b*rho*p_ep + b*0 + b_b*0)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * N_r * N_f))
+
+R0_pb <- with(as.list(mouse.parms), sqrt(((b*rho*0 + b*p_pb + b_b*0)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * N_r * N_f))
+
+R0_b <- with(as.list(mouse.parms), sqrt(((b*rho*0 + b*0 + b_b*p_b)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * N_r * N_f))
+
+par(mfrow=c(1,1))
+plot(N_f,R0,type="l",ylim=c(0,2.5))
+lines(N_f,R0_ep,col="blue")
+lines(N_f,R0_pb,col="green")
+lines(N_f,R0_b,col="red")
+legend("topleft",c("full","blocked","partially blocked","earlyphase"))
+
+
+
+
+
+#rat
+N_f = 1:20
+N_r = 1
+R0 <- with(as.list(rat.parms), sqrt(((b*rho*p_ep + b*p_pb + b_b*p_b)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * N_r * N_f))
+
+R0_ep <- with(as.list(rat.parms), sqrt(((b*rho*p_ep + b*0 + b_b*0)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * N_r * N_f))
+
+R0_pb <- with(as.list(rat.parms), sqrt(((b*rho*0 + b*p_pb + b_b*0)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * N_r * N_f))
+
+R0_b <- with(as.list(rat.parms), sqrt(((b*rho*0 + b*0 + b_b*p_b)*sigma/(epsilon*(sigma+mu))) * (b*alpha/(lambdaB + lambdaC + lambdaA + mu_f + tau + mu_pb + mu_b)) * N_r * N_f))
+
+par(mfrow=c(1,1))
+plot(N_f,R0,type="l",ylim=c(0,2.5))
+lines(N_f,R0_ep,col="blue")
+lines(N_f,R0_pb,col="green")
+lines(N_f,R0_b,col="red")
+legend("topleft",c("full","blocked","partially blocked","earlyphase"))
