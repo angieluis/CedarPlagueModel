@@ -1,6 +1,7 @@
 library(deSolve)
 library(tidyverse)
-source("/Users/jhinnebusch/R/Plague/Models/SIRmodel.R")
+#source("/Users/jhinnebusch/R/Plague/Models/SIRmodel.R")
+source("SIRmodel.R")
 
 
 
