@@ -80,7 +80,7 @@ EPTonly_rat_1CFU<-cbind.data.frame(time, S, L, I, E, R, dr, Id, U, Iep, Ipb, Ib,
 
 
 #HOST Compartment;
-par(mfrow=c(2,1))
+#par(mfrow=c(2,1))
 #postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_mouseblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
 
 #mouse plot
