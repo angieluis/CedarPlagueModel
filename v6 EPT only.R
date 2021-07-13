@@ -3,6 +3,9 @@ library(tidyverse)
 #source("/Users/jhinnebusch/R/Plague/Models/SIRmodel.R")
 source("SIRmodel.R")
 
+####### These simulations explore if transmission occurred only during the early phase of flea infection. No transmission from partially blocked or blocked fleas. (set ppb and pb to 0)
+
+
 #................................................
 # Infected and Maintained on Mouse Blood####
 # Assuming lethal dose = 1 CFU
