@@ -1,13 +1,17 @@
 library(deSolve)
 library(tidyverse)
-source("/Users/jhinnebusch/R/Plague/Models/SIRmodel.R")
+#source("/Users/jhinnebusch/R/Plague/Models/SIRmodel.R")
+source("SIRmodel.R")
 
-
+#................................................
+# Infected and Maintained on Mouse Blood####
+# Assuming lethal dose = 1 CFU
+#................................................
 
 times=seq(1,30,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
-parms=c(alpha=1,lambdaA=0.04,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
-        pep=0.3,ppb=0.11,pb=0.75, tep=1, tpb=1, tb=1, 
+parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
+        pep=0.03,ppb=0.11,pb=0.5, tep=1, tpb=1, tb=1, 
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
 out=lsoda(xstart, times, SIR.model, parms)  #run the model
 
@@ -32,17 +36,22 @@ sum(df1[97]+Ib1[97]+Ipb1[97]+U1[97]+Iep1[97])
 sum(S1[97], L1[97], I1[97], E1[97], R1[97], dr1[97])
 
 #Create dataframe of infection output by time for each model state;
-#mouse_SIR<-cbind.data.frame(time, S1, L1, I1, E1, R1, dr1, U1, Iep1, Ipb1, Ib1, df1)
+mouse_1CFU<-cbind.data.frame(time, S=S1, L=L1, I=I1, E=E1, R=R1, Id=Id1, dr=dr1, U=U1, Iep=Iep1, Ipb=Ipb1, Ib=Ib1, df=df1)
+
+
+
+
 
 #................................................
-#Infected and Maintained on Rat Blood####
+# Infected and Maintained on Rat Blood####
+# Assuming lethal dose = 1 CFU 
 #................................................
 
 
 times=seq(1,30,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
-        pep=1.0,ppb=0.10,pb=0.89,tep=1, tpb=1 , tb=1 ,
+        pep=0.1,ppb=0.10,pb=0.67,tep=1, tpb=1 , tb=1 ,
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
 out=lsoda(xstart, times, SIR.model, parms)  #run the model
 
@@ -61,7 +70,7 @@ Ipb=out[,11]
 Ib=out[,12]
 df=out[,13]
 
-#rat_SIR<-cbind.data.frame(time, S, L, I, E, R, dr, U, Iep, Ipb, Ib, df)
+rat_1CFU<-cbind.data.frame(time, S, L, I, E, R, dr, Id, U, Iep, Ipb, Ib, df)
 
 
 #..................................................................
@@ -71,73 +80,76 @@ df=out[,13]
 
 
 #HOST Compartment;
-#par(mfrow=c(2,1))
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Host_mouseblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_mouseblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+par(mfrow=c(2,1))
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_mouseblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
 
-plot(time,I1,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
-lines(time,E1,col="blue",lwd=2,lty=1)
-lines(time,S1,col="forestgreen",lwd=2,lty=1)
-lines(time,L1,col="red",lwd=2,lty=5)
-lines(time,R1,col="blue",lwd=2,lty=5)
-lines(time,Id1,col="black",lwd=2,lty=1)
+#mouse plot
+plot(mouse_1CFU$time,mouse_1CFU$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
+lines(mouse_1CFU$time,mouse_1CFU$E,col="blue",lwd=2,lty=1)
+lines(mouse_1CFU$time,mouse_1CFU$S,col="forestgreen",lwd=2,lty=1)
+lines(mouse_1CFU$time,mouse_1CFU$L,col="red",lwd=2,lty=5)
+lines(mouse_1CFU$time,mouse_1CFU$R,col="blue",lwd=2,lty=5)
+lines(mouse_1CFU$time,mouse_1CFU$Id,col="black",lwd=2,lty=1)
 legend(23,10,c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1, 5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp =0.5, y.intersp =1)
 title(main="Host Dynamics with Mouse Blood Infected Fleas, 9UH1IH 100UF LD50 of 1 CFU  v6")
-dev.off()
-#rat plot;
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Host_ratblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_ratblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+#dev.off()
 
-plot(time,I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
-lines(time,E,col="blue",lwd=2,lty=1)
-lines(time,S,col="forestgreen",lwd=2,lty=1)
-lines(time,L,col="red",lwd=2,lty=5)
-lines(time,R,col="blue",lwd=2,lty=5)
-lines(time,Id,col="black",lwd=2,lty=1)
+#rat plot;
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_ratblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+
+plot(rat_1CFU$time,rat_1CFU$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
+lines(rat_1CFU$time,rat_1CFU$E,col="blue",lwd=2,lty=1)
+lines(rat_1CFU$time,rat_1CFU$S,col="forestgreen",lwd=2,lty=1)
+lines(rat_1CFU$time,rat_1CFU$L,col="red",lwd=2,lty=5)
+lines(rat_1CFU$time,rat_1CFU$R,col="blue",lwd=2,lty=5)
+lines(rat_1CFU$time,rat_1CFU$Id,col="black",lwd=2,lty=1)
 legend(23,10,c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1, 5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
 title(main="Host Dynamics with Rat Blood Infected Fleas, 9UH1IH 100UF LD50 of 1 CFU v6")
-dev.off()
+#dev.off()
 
 #............................................................................
 #FLEA Compartment
 
-#par(mfrow=c(2,1))
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Flea_mouseblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Flea_mouseblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+par(mfrow=c(2,1))
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Flea_mouseblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
 
-plot(time,U1,ylab="Abundance",xlab="Time",type="l",col="forestgreen",lwd=2,ylim=c(0,max(100)),lty=1)
-lines(time,Iep1,col="blue",lwd=2,lty=1)
-lines(time,Ipb1,col="red",lwd=2,lty=5)
-lines(time,Ib1,col="red",lwd=2,lty=1)
-lines(time,df1,col="black",lwd=2,lty=1)
+#mouse fleas plot
+plot(mouse_1CFU$time,mouse_1CFU$U,ylab="Abundance",xlab="Time",type="l",col="forestgreen",lwd=2,ylim=c(0,max(100)),lty=1)
+lines(mouse_1CFU$time,mouse_1CFU$Iep,col="blue",lwd=2,lty=1)
+lines(mouse_1CFU$time,mouse_1CFU$Ipb,col="red",lwd=2,lty=5)
+lines(mouse_1CFU$time,mouse_1CFU$Ib,col="red",lwd=2,lty=1)
+lines(mouse_1CFU$time,mouse_1CFU$df,col="black",lwd=2,lty=1)
 legend(20,50,c("Uninfected", "Infectious-Early Phase", "Infectious-Partially Blocked","Infectious-Fully Blocked", "Cumulative Dead"),
        col=c("forestgreen","blue", "red","red", "black"),bty="n",lty=c(1,1, 5, 1, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
 title(main="Flea Dynamics with Mouse Blood Infected Fleas, 9UH1IH 100UF LD50 of 1 CFU v6")
-dev.off()
-#rat plot;
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Flea_ratblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Flea_ratblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+#dev.off()
 
-plot(time,U,ylab="Abundance",xlab="Time",type="l",col="forestgreen",lwd=2,ylim=c(0,max(100)),lty=1)
-lines(time,Iep,col="blue",lwd=2,lty=1)
-lines(time,Ipb,col="red",lwd=2,lty=5)
-lines(time,Ib,col="red",lwd=2,lty=1)
-lines(time,df,col="black",lwd=2,lty=1)
+#rat fleas plot;
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Flea_ratblood_1CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+
+plot(rat_1CFU$time,rat_1CFU$U,ylab="Abundance",xlab="Time",type="l",col="forestgreen",lwd=2,ylim=c(0,max(100)),lty=1)
+lines(rat_1CFU$time,rat_1CFU$Iep,col="blue",lwd=2,lty=1)
+lines(rat_1CFU$time,rat_1CFU$Ipb,col="red",lwd=2,lty=5)
+lines(rat_1CFU$time,rat_1CFU$Ib,col="red",lwd=2,lty=1)
+lines(rat_1CFU$time,rat_1CFU$df,col="black",lwd=2,lty=1)
 legend(20,50,c("Uninfected", "Infectious-Early Phase", "Infectious-Partially Blocked","Infectious-Fully Blocked", "Cumulative Dead"),
        col=c("forestgreen","blue", "red","red", "black"),bty="n",lty=c(1,1, 5, 1, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
 title(main="Flea Dynamics with Rat Blood Infected Fleas, 9UH1IH 100UF LD50 of 1 CFU v6")
-dev.off()
+#dev.off()
+
+
 
 
 
 #..................................................
 #Threshold of 10 CFU####
+# Mouse blood
 #..................................................
 
 times=seq(1,30,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
-parms=c(alpha=1,lambdaA=0.04,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
-        pep=0.3,ppb=0.11,pb=0.75, tep=0.01, tpb=0.5, tb=0.96, 
+parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
+        pep=0.03,ppb=0.11,pb=0.5, tep=0.001, tpb=0.5, tb=0.8, 
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
 out=lsoda(xstart, times, SIR.model, parms)  #run the model
 
@@ -162,18 +174,19 @@ sum(df1[97]+Ib1[97]+Ipb1[97]+U1[97]+Iep1[97])
 sum(S1[97], L1[97], I1[97], E1[97], R1[97], dr1[97])
 
 #Create dataframe of infection output by time for each model state;
-#mouse_SIR<-cbind.data.frame(time, S1, L1, I1, E1, R1, dr1, U1, Iep1, Ipb1, Ib1, df1)
+mouse_10CFU<-cbind.data.frame(time, S=S1, L=L1, I=I1, E=E1, R=R1, Id=Id1, dr=dr1, U=U1, Iep=Iep1, Ipb=Ipb1, Ib=Ib1, df=df1)
 
 
 
 #................................................
-#Infected and Maintained on Rat Blood####
+# 10 CFU
+# Infected and Maintained on Rat Blood####
 #................................................
 
 times=seq(1,30,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
-        pep=1.0,ppb=0.10,pb=0.89,tep=1, tpb=1 , tb=0.96 ,
+        pep=0.1,ppb=0.10,pb=0.67,tep=0.5, tpb=1 , tb=0.8 ,
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
 out=lsoda(xstart, times, SIR.model, parms)  #run the model
 
@@ -192,7 +205,7 @@ Ipb=out[,11]
 Ib=out[,12]
 df=out[,13]
 
-#rat_SIR<-cbind.data.frame(time, S, L, I, E, R, dr, U, Iep, Ipb, Ib, df)
+rat_10CFU<-cbind.data.frame(time, S, L, I, E, R, dr, Id, U, Iep, Ipb, Ib, df)
 
 
 #..................................................................
@@ -200,75 +213,75 @@ df=out[,13]
 #..................................................................
 
 
+par(mfrow=c(2,1))
 
-#HOST Compartment;
-#par(mfrow=c(2,1))
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Host_mouseblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_mouseblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+#mouse plot
+plot(mouse_10CFU$time,mouse_10CFU$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
+lines(mouse_10CFU$time,mouse_10CFU$E,col="blue",lwd=2,lty=1)
+lines(mouse_10CFU$time,mouse_10CFU$S,col="forestgreen",lwd=2,lty=1)
+lines(mouse_10CFU$time,mouse_10CFU$L,col="red",lwd=2,lty=5)
+lines(mouse_10CFU$time,mouse_10CFU$R,col="blue",lwd=2,lty=5)
+lines(mouse_10CFU$time,mouse_10CFU$Id,col="black",lwd=2,lty=1)
+legend(23,10,c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1, 5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp =0.5, y.intersp =1)
+title(main="Host Dynamics with Mouse Blood Infected Fleas, 9UH1IH 100UF LD50 of 10 CFU  v6")
+#dev.off()
 
-plot(time,I1,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
-lines(time,E1,col="blue",lwd=2,lty=1)
-lines(time,S1,col="forestgreen",lwd=2,lty=1)
-lines(time,L1,col="red",lwd=2,lty=5)
-lines(time,R1,col="blue",lwd=2,lty=5)
-lines(time,Id1,col="black",lwd=2,lty=1)
-legend(23,10,c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1,5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp =1)
-title(main="Host Dynamics with Mouse Blood Infected Fleas, 9UH1IH 100UF LD50 of 10 CFU v6")
-dev.off()
 #rat plot;
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Host_ratblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_ratblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_ratblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
 
-plot(time,I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
-lines(time,E,col="blue",lwd=2,lty=1)
-lines(time,S,col="forestgreen",lwd=2,lty=1)
-lines(time,L,col="red",lwd=2,lty=5)
-lines(time,R,col="blue",lwd=2,lty=5)
-lines(time,Id,col="black",lwd=2,lty=1)
-legend(23,10,c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1,5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
+plot(rat_10CFU$time,rat_10CFU$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
+lines(rat_10CFU$time,rat_10CFU$E,col="blue",lwd=2,lty=1)
+lines(rat_10CFU$time,rat_10CFU$S,col="forestgreen",lwd=2,lty=1)
+lines(rat_10CFU$time,rat_10CFU$L,col="red",lwd=2,lty=5)
+lines(rat_10CFU$time,rat_10CFU$R,col="blue",lwd=2,lty=5)
+lines(rat_10CFU$time,rat_10CFU$Id,col="black",lwd=2,lty=1)
+legend(23,10,c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1, 5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
 title(main="Host Dynamics with Rat Blood Infected Fleas, 9UH1IH 100UF LD50 of 10 CFU v6")
-dev.off()
+#dev.off()
 
 #............................................................................
 #FLEA Compartment
 
-#par(mfrow=c(2,1))
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Flea_mouseblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Flea_mouseblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+##par(mfrow=c(2,1))
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Flea_mouseblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
 
-plot(time,U1,ylab="Abundance",xlab="Time",type="l",col="forestgreen",lwd=2,ylim=c(0,max(100)),lty=1)
-lines(time,Iep1,col="blue",lwd=2,lty=1)
-lines(time,Ipb1,col="red",lwd=2,lty=5)
-lines(time,Ib1,col="red",lwd=2,lty=1)
-lines(time,df1,col="black",lwd=2,lty=1)
+#mouse fleas plot
+plot(mouse_10CFU$time,mouse_10CFU$U,ylab="Abundance",xlab="Time",type="l",col="forestgreen",lwd=2,ylim=c(0,max(100)),lty=1)
+lines(mouse_10CFU$time,mouse_10CFU$Iep,col="blue",lwd=2,lty=1)
+lines(mouse_10CFU$time,mouse_10CFU$Ipb,col="red",lwd=2,lty=5)
+lines(mouse_10CFU$time,mouse_10CFU$Ib,col="red",lwd=2,lty=1)
+lines(mouse_10CFU$time,mouse_10CFU$df,col="black",lwd=2,lty=1)
 legend(20,50,c("Uninfected", "Infectious-Early Phase", "Infectious-Partially Blocked","Infectious-Fully Blocked", "Cumulative Dead"),
        col=c("forestgreen","blue", "red","red", "black"),bty="n",lty=c(1,1, 5, 1, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
 title(main="Flea Dynamics with Mouse Blood Infected Fleas, 9UH1IH 100UF LD50 of 10 CFU v6")
-dev.off()
-#rat plot;
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Flea_ratblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Flea_ratblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+#dev.off()
 
-plot(time,U,ylab="Abundance",xlab="Time",type="l",col="forestgreen",lwd=2,ylim=c(0,max(100)),lty=1)
-lines(time,Iep,col="blue",lwd=2,lty=1)
-lines(time,Ipb,col="red",lwd=2,lty=5)
-lines(time,Ib,col="red",lwd=2,lty=1)
-lines(time,df,col="black",lwd=2,lty=1)
+#rat fleas plot;
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Flea_ratblood_10CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+
+plot(rat_10CFU$time,rat_10CFU$U,ylab="Abundance",xlab="Time",type="l",col="forestgreen",lwd=2,ylim=c(0,max(100)),lty=1)
+lines(rat_10CFU$time,rat_10CFU$Iep,col="blue",lwd=2,lty=1)
+lines(rat_10CFU$time,rat_10CFU$Ipb,col="red",lwd=2,lty=5)
+lines(rat_10CFU$time,rat_10CFU$Ib,col="red",lwd=2,lty=1)
+lines(rat_10CFU$time,rat_10CFU$df,col="black",lwd=2,lty=1)
 legend(20,50,c("Uninfected", "Infectious-Early Phase", "Infectious-Partially Blocked","Infectious-Fully Blocked", "Cumulative Dead"),
        col=c("forestgreen","blue", "red","red", "black"),bty="n",lty=c(1,1, 5, 1, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
 title(main="Flea Dynamics with Rat Blood Infected Fleas, 9UH1IH 100UF LD50 of 10 CFU v6")
-dev.off()
+#dev.off()
+
+
 
 
 
 #..................................................
-#Threshold of 100 CFU####
+# Threshold of 100 CFU####
+# Mouse blood
 #..................................................
 
 times=seq(1,30,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
-parms=c(alpha=1,lambdaA=0.04,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
-        pep=0.3,ppb=0.11,pb=0.5, tep=0.00, tpb=0.5, tb=0.88, 
+parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
+        pep=0.03,ppb=0.11,pb=0.5, tep=0.00, tpb=0, tb=0.65, 
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
 out=lsoda(xstart, times, SIR.model, parms)  #run the model
 
@@ -293,7 +306,7 @@ sum(df1[97]+Ib1[97]+Ipb1[97]+U1[97]+Iep1[97])
 sum(S1[97], L1[97], I1[97], E1[97], R1[97], dr1[97])
 
 #Create dataframe of infection output by time for each model state;
-#mouse_SIR<-cbind.data.frame(time, S1, L1, I1, E1, R1, dr1, U1, Iep1, Ipb1, Ib1, df1)
+mouse_100CFU<-cbind.data.frame(time, S=S1, L=L1, I=I1, E=E1, R=R1, Id=Id1, dr=dr1, U=U1, Iep=Iep1, Ipb=Ipb1, Ib=Ib1, df=df1)
 
 #................................................
 #Infected and Maintained on Rat Blood####
@@ -303,7 +316,7 @@ sum(S1[97], L1[97], I1[97], E1[97], R1[97], dr1[97])
 times=seq(1,30,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
-        pep=1.0,ppb=0.10,pb=0.89,tep=0.1, tpb=1 , tb=0.65 ,
+        pep=0.1,ppb=0.10,pb=0.67,tep=0, tpb=1 , tb=0.41 ,
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
 out=lsoda(xstart, times, SIR.model, parms)  #run the model
 
@@ -322,7 +335,7 @@ Ipb=out[,11]
 Ib=out[,12]
 df=out[,13]
 
-#rat_SIR<-cbind.data.frame(time, S, L, I, E, R, dr, U, Iep, Ipb, Ib, df)
+rat_100CFU<-cbind.data.frame(time, S, L, I, E, R, dr, Id, U, Iep, Ipb, Ib, df)
 
 
 #..................................................................
@@ -331,31 +344,31 @@ df=out[,13]
 
 #HOST Compartment;
 #par(mfrow=c(2,1))
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Host_mouseblood_100CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_mouseblood_100CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_mouseblood_100CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
 
-plot(time,I1,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
-lines(time,E1,col="blue",lwd=2,lty=1)
-lines(time,S1,col="forestgreen",lwd=2,lty=1)
-lines(time,L1,col="red",lwd=2,lty=5)
-lines(time,R1,col="blue",lwd=2,lty=5)
-lines(time,Id1,col="black",lwd=2,lty=1)
+#mouse
+plot(mouse_100CFU$time,mouse_100CFU$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
+lines(mouse_100CFU$time,mouse_100CFU$E,col="blue",lwd=2,lty=1)
+lines(mouse_100CFU$time,mouse_100CFU$S,col="forestgreen",lwd=2,lty=1)
+lines(mouse_100CFU$time,mouse_100CFU$L,col="red",lwd=2,lty=5)
+lines(mouse_100CFU$time,mouse_100CFU$R,col="blue",lwd=2,lty=5)
+lines(mouse_100CFU$time,mouse_100CFU$Id,col="black",lwd=2,lty=1)
 legend(23,10,c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1,5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp =1)
 title(main="Host Dynamics with Mouse Blood Infected Fleas, 9UH1IH 100UF LD50 of 100 CFU v6")
-dev.off()
-#rat plot;
-#postscript("C:/Users/Cedar/Desktop/Plague/Models/Graphs/Host_ratblood_100CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
-postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_ratblood_100CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+#dev.off()
 
-plot(time,I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
-lines(time,E,col="blue",lwd=2,lty=1)
-lines(time,S,col="forestgreen",lwd=2,lty=1)
-lines(time,L,col="red",lwd=2,lty=5)
-lines(time,R,col="blue",lwd=2,lty=5)
-lines(time,Id,col="black",lwd=2,lty=1)
+#rat plot;
+#postscript("/Users/jhinnebusch/R/Plague/Models/Graphs/Host_ratblood_100CFU.eps", horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+
+plot(rat_100CFU$time,rat_100CFU$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
+lines(rat_100CFU$time,rat_100CFU$E,col="blue",lwd=2,lty=1)
+lines(rat_100CFU$time,rat_100CFU$S,col="forestgreen",lwd=2,lty=1)
+lines(rat_100CFU$time,rat_100CFU$L,col="red",lwd=2,lty=5)
+lines(rat_100CFU$time,rat_100CFU$R,col="blue",lwd=2,lty=5)
+lines(rat_100CFU$time,rat_100CFU$Id,col="black",lwd=2,lty=1)
 legend(23,10,c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1,5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
 title(main="Host Dynamics with Rat Blood Infected Fleas, 9UH1IH 100UF LD50 of 100 CFU v6")
-dev.off()
+#dev.off()
 
 #............................................................................
 #FLEA Compartment
