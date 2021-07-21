@@ -13,7 +13,7 @@ source("SIRmodel.R")
 # Assuming lethal dose = 1 CFU
 #................................................
 
-times=seq(1,30,by=0.3)					#time steps to output
+times=seq(1,100,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
         pep=0.03,ppb=0,pb=0, tep=1, tpb=1, tb=1, 
@@ -53,7 +53,7 @@ EPTonly_mouse_1CFU<-cbind.data.frame(time, S=S1, L=L1, I=I1, E=E1, R=R1, Id=Id1,
 #................................................
 
 
-times=seq(1,30,by=0.3)					#time steps to output
+times=seq(1,100,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
         pep=0.1,ppb=0,pb=0,tep=1, tpb=1 , tb=1 ,
@@ -153,7 +153,7 @@ title(main="Flea Dynamics with Rat Blood Infected Fleas, 9UH1IH 100UF LD50 of 1 
 # Mouse blood
 #..................................................
 
-times=seq(1,30,by=0.3)					#time steps to output
+times=seq(1,100,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
         pep=0.03,ppb=0,pb=0, tep=0.001, tpb=0.5, tb=0.8, 
@@ -190,7 +190,7 @@ EPTonly_mouse_10CFU<-cbind.data.frame(time, S=S1, L=L1, I=I1, E=E1, R=R1, Id=Id1
 # Infected and Maintained on Rat Blood####
 #................................................
 
-times=seq(1,30,by=0.3)					#time steps to output
+times=seq(1,100,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
         pep=0.1,ppb=0,pb=0,tep=0.5, tpb=1 , tb=0.8 ,
@@ -284,7 +284,7 @@ title(main="Flea Dynamics with Rat Blood Infected Fleas, 9UH1IH 100UF LD50 of 10
 # Mouse blood
 #..................................................
 
-times=seq(1,30,by=0.3)					#time steps to output
+times=seq(1,100,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
         pep=0.03,ppb=0,pb=0, tep=0.00, tpb=0, tb=0.65, 
@@ -319,7 +319,7 @@ EPTonly_mouse_100CFU<-cbind.data.frame(time, S=S1, L=L1, I=I1, E=E1, R=R1, Id=Id
 #................................................
 
 
-times=seq(1,30,by=0.3)					#time steps to output
+times=seq(1,100,by=0.3)					#time steps to output
 xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
         pep=0.1,ppb=0,pb=0,tep=0, tpb=1 , tb=0.41 ,
@@ -405,3 +405,18 @@ legend(20,50,c("Uninfected", "Infectious-Early Phase", "Infectious-Partially Blo
        col=c("forestgreen","blue", "red","red", "black"),bty="n",lty=c(1,1, 5, 1, 1),lwd=2,seg.len=2.0,x.intersp = 0.5, y.intersp = 1)
 title(main="Flea Dynamics with Rat Blood Infected Fleas, Early Phase only, of 100 CFU v6")
 dev.off()
+
+
+
+###############################################################################
+## Compare how many rodents were dead at the end for the different scenarios
+###############################################################################
+
+RodentsDead.EPTonly <- data.frame(rodent=c("mouse","rat"),scenario=rep("EPTonly",2),CFU.1=rep(NA,2),CFU.10=rep(NA,2),CFU.100=rep(NA,2))
+
+RodentsDead.EPTonly$CFU.1[which(RodentsDead.EPTonly$rodent=="mouse")] <- EPTonly_mouse_1CFU$dr[length(times)]
+RodentsDead.EPTonly$CFU.10[which(RodentsDead.EPTonly$rodent=="mouse")] <- EPTonly_mouse_10CFU$dr[length(times)]
+RodentsDead.EPTonly$CFU.100[which(RodentsDead.EPTonly$rodent=="mouse")] <- EPTonly_mouse_100CFU$dr[length(times)]
+RodentsDead.EPTonly$CFU.1[which(RodentsDead.EPTonly$rodent=="rat")] <- EPTonly_rat_1CFU$dr[length(times)]
+RodentsDead.EPTonly$CFU.10[which(RodentsDead.EPTonly$rodent=="rat")] <- EPTonly_rat_10CFU$dr[length(times)]
+RodentsDead.EPTonly$CFU.100[which(RodentsDead.EPTonly$rodent=="rat")] <- EPTonly_rat_100CFU$dr[length(times)]
