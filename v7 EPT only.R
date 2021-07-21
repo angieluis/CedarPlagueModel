@@ -3,7 +3,7 @@ library(tidyverse)
 #source("/Users/jhinnebusch/R/Plague/Models/SIRmodel.R")
 source("SIRmodel.R")
 
-####### v7 uses model2 which divides transmission function by number of hosts
+####### v7 uses model which divides transmission function by number of hosts
 
 ####### These simulations explore if transmission occurred only during the early phase of flea infection. No transmission from partially blocked or blocked fleas. (set ppb and pb to 0)
 
@@ -18,7 +18,7 @@ xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginn
 parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
         pep=0.03,ppb=0,pb=0, tep=1, tpb=1, tb=1, 
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
-out=lsoda(xstart, times, SIR.model.2, parms)  #run the model
+out=lsoda(xstart, times, SIR.model.fleasperhost, parms)  #run the model
 
 time=out[,1]
 S1=out[,2]
@@ -58,7 +58,7 @@ xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginn
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
         pep=0.1,ppb=0,pb=0,tep=1, tpb=1 , tb=1 ,
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
-out=lsoda(xstart, times, SIR.model.2, parms)  #run the model
+out=lsoda(xstart, times, SIR.model.fleasperhost, parms)  #run the model
 
 time=out[,1]
 S=out[,2]
@@ -158,7 +158,7 @@ xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginn
 parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
         pep=0.03,ppb=0,pb=0, tep=0.001, tpb=0.5, tb=0.8, 
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
-out=lsoda(xstart, times, SIR.model.2, parms)  #run the model
+out=lsoda(xstart, times, SIR.model.fleasperhost, parms)  #run the model
 
 time=out[,1]
 S1=out[,2]
@@ -195,7 +195,7 @@ xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginn
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
         pep=0.1,ppb=0,pb=0,tep=0.5, tpb=1 , tb=0.8 ,
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
-out=lsoda(xstart, times, SIR.model.2, parms)  #run the model
+out=lsoda(xstart, times, SIR.model.fleasperhost, parms)  #run the model
 
 time=out[,1]
 S=out[,2]
@@ -289,7 +289,7 @@ xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginn
 parms=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
         pep=0.03,ppb=0,pb=0, tep=0.00, tpb=0, tb=0.65, 
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
-out=lsoda(xstart, times, SIR.model.2, parms)  #run the model
+out=lsoda(xstart, times, SIR.model.fleasperhost, parms)  #run the model
 
 time=out[,1]
 S1=out[,2]
@@ -324,7 +324,7 @@ xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginn
 parms=c(alpha=1,lambdaA=0.04,lambdaB=0.02,lambdaC=0.06,b=0.4,b1=2,tau=0.48, muf=0.02, mupb=0.13,mub=0.26,
         pep=0.1,ppb=0,pb=0,tep=0, tpb=1 , tb=0.41 ,
         mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
-out=lsoda(xstart, times, SIR.model.2, parms)  #run the model
+out=lsoda(xstart, times, SIR.model.fleasperhost, parms)  #run the model
 
 time=out[,1]
 S=out[,2]

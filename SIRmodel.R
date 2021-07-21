@@ -69,7 +69,7 @@ SIR.model=function(t,x,params){
 
 ### divide transmission terms by number of vertebrate hosts to match Ross-MacDonald model
 
-SIR.model.2=function(t,x,params){
+SIR.model.fleasperhost=function(t,x,params){
   b=params["b"]          #biting rate of fleas
   b1=params["b1"]        #biting rate of blocked fleas
   tep=params["tep"]      #proportion of INFECTIOUS bites from early-phase fleas
