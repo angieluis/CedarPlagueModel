@@ -3,205 +3,236 @@
 ##  based on Cedar & Joe's model and data
 ###################################################################################
 
+
+######## To work on :
+#######     # when all rodents are dead, the fleas have no one to bite on
+            # error at sample(possible_rodents, bites, replace = TRUE)
+            # return other summaries - time series
+
+
 ##params
-
-b=0.4  # mean of 0.4 bites per day from a Poisson distribution (for non-blocked fleas)
-b1=2
-muf=0.02
-mupb=0.13
-mub=0.26
-tau=0.48
-lambdaA=0.04
-lambdaB=0.02
-lambdaC=0.06
-pep=0.03
-ppb=0.11
-pb=0.5
-tep=0.001
-tpb=0.5
-tb=0.8
-alpha=1
-mu=0.002 #rodent mortality
-gamma=0.14	 #recovery rate in rodent from low-dose flea infection
-epsilon=0.5  #disease induced mortality rate in rodent from high-dose flea infection
-sigma=0.25  #rate to become infectious from latent class
-
-
-# Total number of Rodent Hosts to start with
-S=9  # susceptible rodents
-L=0  # rodents latently infected (pre-infecitous)
-I=1  # rodents infected (bacteremic)
-E=0  # rodents exposed (non-infectious)
-R=0  # rodents recovered and immune
-dr=0 # rodents that died naturally
-Id=0 # rodents that died of infection
-
-H = sum(c(S,L,E,I,R)) # total hosts alive 
-
-U=100    # uninfected fleas
-Iep=0  # early phase fleas
-Ipb=0 # partially blocked fleas
-Ib=0  # fully blocked fleas
-df=0  # dead fleas
-
-F= sum(U,Iep,Ipb,Ib) # total fleas alive
-
+params=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
+        pep=0.03,ppb=0.11,pb=0.5, tep=1, tpb=1, tb=1, 
+        mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
+xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
 T = 100 # total number of days to simulate
+n.sim = 100
 
-# create matrices to hold each individual's status over time
-rodents <- matrix(NA,T,H)
-fleas <- matrix(NA,T,F)
 
-rodents[1,] <- sample(c(rep("S",S),rep("L",L),rep("I",I),rep("E",E),rep("R",R))) 
-fleas[1,] <- sample( c(rep("U",U),rep("Iep",Iep),rep("Ipb",Ipb),rep("Ib",Ib)))
+plague.IBM <- function(params, # vector of params with names, see below
+                       xstart, # vector of starting values with names
+                       T,      # number of time steps to simulate
+                       n.sim  # number of simulations
+                       ){
 
-dose=matrix(0,T,H)
-
-for(t in 2:T){
-  # set up a vector to hold cumulative dose from infected fleas to link flea model to rodent model
-  #dose <- rep(0, H)
-###################################################################################
-## Flea Model
-###################################################################################
-
-# Simulate each flea separately 
+  b=params["b"]          #biting rate of fleas
+  b1=params["b1"]        #biting rate of blocked fleas
+  tep=params["tep"]      #proportion of INFECTIOUS bites from early-phase fleas
+  tpb=params["tpb"]      #proportion of INFECTIOUS bites from partially blocked fleas
+  tb=params["tb"]        #proportion of INFECTIOUS bites from fully blocked fleas
+  mu=params["mu"]		     #natural mortality rate of rodent (uninfected)
+  pep=params["pep"]      #Proportion of ep fleas that transmit
+  ppb=params["ppb"]      #Proportion of partially blocked fleas that transmit
+  pb=params["pb"]        #Proportion of fully blocked fleas that transmit
+  gamma=params["gamma"]	 #recovery rate in rodent from low-dose flea infection
+  epsilon=params["epsilon"]  #disease induced mortality rate in rodent from high-dose flea infection
+  sigma=params["sigma"]  #rate to become infectious from latent class
+  alpha=params["alpha"]  #proportion of fleas infected from host
+  muf=params["muf"]      #natural mortality of flea
+  mupb=params["mupb"]    #mortality of partially blocked flea
+  mub=params["mub"]      #mortality of blocked flea
+  lambdaA=params["lambdaA"] #rate of developing partial blockage from EP
+  lambdaB=params["lambdaB"] #rate of clearing infection in EP (back to uninfected)
+  lambdaC=params["lambdaC"] #rate of leaving EP (still infected but not enough to block)
+  tau=params["tau"]         #rate of developing full blockage
   
-  for(f in 1:F){
-    bites <-rpois(1,ifelse(fleas[t-1,f]=="Ib",b1,b)) # how many bites does this flea make today? Draw from a Poisson distribution. If blocked use mean of b1, otherwise b
+  S = xstart["S"]  # susceptible rodents
+  L = xstart["L"]  # rodents latently infected (pre-infecitous)
+  I = xstart["I"]  # rodents infected (bacteremic)
+  E = xstart["E"]  # rodents exposed (non-infectious)
+  R = xstart["R"]  # rodents recovered and immune
+  dr= xstart["dr"] # all rodents that died
+  Id= xstart["Id"] # rodents that died of infection
   
-    if(bites>0){
-      adH <- c(which(rodents[t-1,]=="dr"),which(rodents[t-1,]=="Id")) # dead rodents so fleas wont feed on these
-      # remove dead hosts from possibilty
-      if(length(adH)>0){
-        possible_rodents <- (1:H)[-adH]
-      }else{  
-        possible_rodents <-  1:H
-      }
-      who_bites <- sample(possible_rodents,bites,replace=TRUE) # which rodents are these bites on? Draw from those that are alive - assumes the same flea could bite the same host more than once
-      status_of_bitten <- rodents[t-1,who_bites] # what class(es) are the bitten rodents in
+  U = xstart["U"]    # uninfected fleas
+  Iep = xstart["Iep"]  # early phase fleas
+  Ipb = xstart["Ipb"] # partially blocked fleas
+  Ib = xstart["Ib"]  # fully blocked fleas
+  df = xstart["df"]  # dead fleas
   
-      # bites are useless unless by an infected flea on uninfected host, or from an uninfected flea on Infected host
-      for(i in 1:length(status_of_bitten)){ # for each of the bites
-        if(status_of_bitten[i]=="S"){ # if rodent was uninfected, it could get infected but depends on cumulative dose, so keep track of that for the rodent model below
-          if(fleas[t-1,f]=="Iep"){
-            dose[t,who_bites[i]] <- min(dose[t,who_bites[i]] + rbinom(1,1,pep) * tep ,1)#if it transmits, it adds dose of tep
+  H = sum(c(S,L,E,I,R)) # total hosts alive 
+
+  F= sum(U,Iep,Ipb,Ib) # total fleas alive
+
+
+  # create matrices to hold each individual's status over time
+  rodents <- array(data=NA, dim=c(T,H,n.sim))
+  fleas   <- array(data=NA, dim=c(T,F,n.sim))
+
+  rodents[1,,] <- sample(c(rep("S",S),rep("L",L),rep("I",I),rep("E",E),rep("R",R))) 
+  fleas[1,,] <- sample( c(rep("U",U),rep("Iep",Iep),rep("Ipb",Ipb),rep("Ib",Ib)))
+
+
+  for(s in 1:n.sim){  
+    for(t in 2:T){
+      dose <- rep(0, H)
+
+      ###################################################################################
+      ## Flea Model
+      ###################################################################################
+
+      # Simulate each flea separately 
+  
+      for(f in 1:F){
+        bites <-rpois(1,ifelse(fleas[t-1,f,s]=="Ib",b1,b)) # how many bites does this flea make today? Draw from a Poisson distribution. If blocked use mean of b1, otherwise b
+  
+        if(bites>0){
+          adH <- c(which(rodents[t-1,,s]=="dr"),which(rodents[t-1,,s]=="Id")) # dead rodents so fleas wont feed on these
+          # remove dead hosts from possibilty
+          if(length(adH)>0){
+            possible_rodents <- (1:H)[-adH]
+          }else{  
+            possible_rodents <-  1:H
           }
-          if(fleas[t-1,f]=="Ipb"){
-            dose[t,who_bites[i]] <- min(dose[t,who_bites[i]] + rbinom(1,1,ppb) * tpb ,1)#if it transmits, it adds dose of tpb
-          }
-          if(fleas[t-1,f]=="Ib"){
-            dose[t,who_bites[i]] <- min(dose[t,who_bites[i]] + rbinom(1,1,pb) * tb ,1) #if it transmits, it adds dose of tb
-          }
-        }
-        if(status_of_bitten[i]=="I"){ # if rodent was infected, it could transmit to uninfected flea
-          if(fleas[t-1,f]=="U"){
-            # if already infected this time step from another bite, stay infected, otherwise see if this bite leads to infection
-            # already infected from another bite? if so stay infected, if not can become infected
-            if(!is.na(fleas[t,f])){
-              if(fleas[t,f]=="Iep"){
-                fleas[t,f] <- "Iep"
-              } 
+          who_bites <- sample(possible_rodents,bites,replace=TRUE) # which rodents are these bites on? Draw from those that are alive - assumes the same flea could bite the same host more than once
+          status_of_bitten <- rodents[t-1,who_bites,s] # what class(es) are the bitten rodents in
+  
+          # bites are useless unless by an infected flea on uninfected host, or from an uninfected flea on Infected host
+          for(i in 1:length(status_of_bitten)){ # for each of the bites
+            if(status_of_bitten[i]=="S"){ # if rodent was uninfected, it could get infected but depends on cumulative dose, so keep track of that for the rodent model below
+              if(fleas[t-1,f,s]=="Iep"){
+                dose[who_bites[i]] <- min(dose[who_bites[i]] + rbinom(1,1,pep) * tep ,1)#if it transmits, it adds dose of tep
+              }
+              if(fleas[t-1,f,s]=="Ipb"){
+                dose[who_bites[i]] <- min(dose[who_bites[i]] + rbinom(1,1,ppb) * tpb ,1)#if it transmits, it adds dose of tpb
+              }
+              if(fleas[t-1,f,s]=="Ib"){
+                dose[who_bites[i]] <- min(dose[who_bites[i]] + rbinom(1,1,pb) * tb ,1) #if it transmits, it adds dose of tb
+              }
             }
-            if(is.na(fleas[t,f])){
-              fleas[t,f] <- ifelse(rbinom(1,1,alpha), "Iep", "U")
+            if(status_of_bitten[i]=="I"){ # if rodent was infected, it could transmit to uninfected flea
+              if(fleas[t-1,f,s]=="U"){
+                # if already infected this time step from another bite, stay infected, otherwise see if this bite leads to infection
+                # already infected from another bite? if so stay infected, if not can become infected
+                if(!is.na(fleas[t,f,s])){
+                  if(fleas[t,f,s]=="Iep"){
+                    fleas[t,f,s] <- "Iep"
+                  } 
+                }
+                if(is.na(fleas[t,f,s])){
+                  fleas[t,f,s] <- ifelse(rbinom(1,1,alpha), "Iep", "U")
+                }
+              }
             }
-          }
-        }
-        if(status_of_bitten[i]!="I"){ # if didn't bite an infected, then stay where you are
-          fleas[t,f] <- fleas[t-1,f] 
-        }
-         # if not uninfected, stay where you are, for now (just modeling becoming infected here, other transitions can happen below)
-        if(fleas[t-1,f]!="U"){ 
-          fleas[t,f] <- fleas[t-1,f] 
-        }
+            if(status_of_bitten[i]!="I"){ # if didn't bite an infected, then stay where you are
+              fleas[t,f,s] <- fleas[t-1,f,s] 
+            }
+            # if not uninfected, stay where you are, for now (just modeling becoming infected here, other transitions can happen below)
+            if(fleas[t-1,f,s]!="U"){ 
+              fleas[t,f,s] <- fleas[t-1,f,s] 
+            }
         
-      } #i, end of each bites loop
+          } #i, end of each bites loop
 
-    } # end of if bites>0
+        } # end of if bites>0
 
-    if(bites==0){
-      # remain in the same class unless die or move in next lines
-      fleas[t,f] <- fleas[t-1,f]
-    }
-    
-    ## need to also add stay in same class if bite but not on U or I.... 
-    
-    # simulate deaths and other movements 
-    # assume these deaths and movements happen after any bites
-  
-    # simulates deaths
-    prob.die <- ifelse(fleas[t-1,f]=="Ipb",mupb,ifelse(fleas[t-1,f]=="Ib",mub,muf))
-    fleas[t,f] <- ifelse(rbinom(1,1,prob=prob.die), "df", fleas[t,f])
-  
-    # if alive, then allow the other few movements
-    if(fleas[t,f] == "Iep"){ # could move back to U (lambdaB) or become partially blocked (lambdaA), or leave by lambda C (consider dead here, i don't like this- need to ask Joe)
-      fleas[t,f] <-  sample(c("U","Ipb","dr","Iep"),1,prob=c(lambdaB,lambdaA,lambdaC,1-(lambdaA+lambdaB+lambdaC))) # definitions say rate for lambda so need to see if ok to use probs 
-    }
-    if(fleas[t,f] == "Ipb"){ # could move into fully blocked
-      fleas[t,f] <- ifelse(rbinom(1,1,prob=tau),"Ib","Ipb") # right now using probability but may want to look at how long have been here in this class instead
-    }
-  
-  } # f,  end of flea loop
-
-
-
-###################################################################################
-## Rodent Model
-###################################################################################
-
-  # ok to use rates (gamma, epsilon, sigma) as probabilities? how variable are these?
-  
-#### Now Simulate each rodent separately using info from flea bites above
-  for (h in 1:H){
-    if(rodents[t-1,h]=="dr"){ # if dead, stay dead
-      rodents[t,h] <- "dr"
-    }
-    if(rodents[t-1,h]=="Id"){ # if dead, stay dead
-      rodents[t,h] <- "Id"
-    }
-    if(rodents[t-1,h]=="S"){ # if was susceptible, check that it survived, then check for cumulative infectious dose from bites
-      die <- rbinom(1,1,mu)
-      if(die==1){
-        rodents[t,h] <- "dr"
-      }else{
-        if(dose[t,h]==0){
-          rodents[t,h] <- "S"
+        if(bites==0){
+          # remain in the same class unless die or move in next lines
+          fleas[t,f,s] <- fleas[t-1,f,s]
         }
-        if(dose[t,h]>0){
-          rodents[t,h] <- ifelse(rbinom(1,1,prob=dose[t,h]),"L", "E")
-        }
-      }
-    } # end S
-
-    if(rodents[t-1,h]=="L"){ # if was latent, check that it survived, then could move to I class
-      die <- rbinom(1,1,mu)
-      if(die==1){
-        rodents[t,h] <- "dr"
-      }else{
-        rodents[t,h] <- ifelse(rbinom(1,1,prob=sigma), "I", "L")
-      }
-    } # end L
     
-    if(rodents[t-1,h]=="I"){ # if was infectious, check if it survived, 
-      rodents[t,h] <- ifelse(rbinom(1,1,prob=epsilon), "Id", "I")
-    } # end I
+        ## need to also add stay in same class if bite but not on U or I.... 
     
-    if(rodents[t-1,h]=="E"){ # if was exposed, check that it survived, then could move to R class
-      die <- rbinom(1,1,mu)
-      if(die==1){
-        rodents[t,h] <- "dr"
-      }else{
-        rodents[t,h] <- ifelse(rbinom(1,1,prob=gamma), "R", "E")
-      }
-    } # end E
-
-    if(rodents[t-1,h]=="R"){ # if was recovered, check if it survived 
-      rodents[t,h] <- ifelse(rbinom(1,1,prob=mu), "dr", "R")
-    } # end R
+        # simulate deaths and other movements 
+        # assume these deaths and movements happen after any bites
   
-  }# end rodent model  
+        # simulates deaths
+        prob.die <- ifelse(fleas[t-1,f,s]=="Ipb",mupb,ifelse(fleas[t-1,f,s]=="Ib",mub,muf))
+        fleas[t,f,s] <- ifelse(rbinom(1,1,prob=prob.die), "df", fleas[t,f,s])
+  
+        # if alive, then allow the other few movements
+        if(fleas[t,f,s] == "Iep"){ # could move back to U (lambdaB) or become partially blocked (lambdaA), or leave by lambda C (consider dead here, i don't like this- need to ask Joe)
+          fleas[t,f,s] <-  sample(c("U","Ipb","dr","Iep"),1,prob=c(lambdaB,lambdaA,lambdaC,1-(lambdaA+lambdaB+lambdaC))) # definitions say rate for lambda so need to see if ok to use probs 
+        }
+        if(fleas[t,f,s] == "Ipb"){ # could move into fully blocked
+          fleas[t,f,s] <- ifelse(rbinom(1,1,prob=tau),"Ib","Ipb") # right now using probability but may want to look at how long have been here in this class instead
+        }
+  
+     } # f,  end of flea loop
+
+
+
+    ###################################################################################
+    ## Rodent Model
+    ###################################################################################
+
+      # ok to use rates (gamma, epsilon, sigma) as probabilities? how variable are these?
+  
+    #### Now Simulate each rodent separately using info from flea bites above
+      for (h in 1:H){
+        if(rodents[t-1,h,s]=="dr"){ # if dead, stay dead
+          rodents[t,,s] <- "dr"
+        }
+        if(rodents[t-1,h,s]=="Id"){ # if dead, stay dead
+          rodents[t,h,s] <- "Id"
+        }
+        if(rodents[t-1,h,s]=="S"){ # if was susceptible, check that it survived, then check for cumulative infectious dose from bites
+          die <- rbinom(1,1,mu)
+          if(die==1){
+            rodents[t,h,s] <- "dr"
+          }else{
+            if(dose[h]==0){
+              rodents[t,h,s] <- "S"
+            }
+            if(dose[h]>0){
+              rodents[t,h,s] <- ifelse(rbinom(1,1,prob=dose[h]),"L", "E")
+            }
+          }
+        } # end S
+
+        if(rodents[t-1,h,s]=="L"){ # if was latent, check that it survived, then could move to I class
+          die <- rbinom(1,1,mu)
+          if(die==1){
+            rodents[t,h,s] <- "dr"
+          }else{
+            rodents[t,h,s] <- ifelse(rbinom(1,1,prob=sigma), "I", "L")
+          }
+        } # end L
     
-} # t 
+        if(rodents[t-1,h,s]=="I"){ # if was infectious, check if it survived, 
+          rodents[t,h,s] <- ifelse(rbinom(1,1,prob=epsilon), "Id", "I")
+        } # end I
+    
+        if(rodents[t-1,h,s]=="E"){ # if was exposed, check that it survived, then could move to R class
+          die <- rbinom(1,1,mu)
+          if(die==1){
+            rodents[t,h,s] <- "dr"
+          }else{
+            rodents[t,h,s] <- ifelse(rbinom(1,1,prob=gamma), "R", "E")
+          }
+        } # end E
+
+        if(rodents[t-1,h,s]=="R"){ # if was recovered, check if it survived 
+          rodents[t,h,s] <- ifelse(rbinom(1,1,prob=mu), "dr", "R")
+        } # end R
+  
+      }# end rodent model  
+    
+    } # t 
+  } # s
+
+
+  return(list(rodents, fleas))
+} #end of function
+
+
+
+out <- plague.IBM(params, # vector of params with names, see below
+                              xstart, # vector of starting values with names
+                              T,      # number of time steps to simulate
+                              n.sim  # number of simulations
+)
+
 
 
 
