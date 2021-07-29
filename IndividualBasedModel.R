@@ -5,9 +5,9 @@
 
 
 ######## To work on :
-#######     # when all rodents are dead, the fleas have no one to bite on
-            # error at sample(possible_rodents, bites, replace = TRUE)
-            # return other summaries - time series
+#######           # return other summaries - time series
+
+# right now, fleas can survive if no one to bite - the bite just affects transmission & and as hosts die the fleas bite on the remained and can bite the same individuals more than once a day
 
 
 ##params
@@ -85,9 +85,14 @@ plague.IBM <- function(params, # vector of params with names, see below
   
       for(f in 1:F){
         bites <-rpois(1,ifelse(fleas[t-1,f,s]=="Ib",b1,b)) # how many bites does this flea make today? Draw from a Poisson distribution. If blocked use mean of b1, otherwise b
-  
-        if(bites>0){
-          adH <- c(which(rodents[t-1,,s]=="dr"),which(rodents[t-1,,s]=="Id")) # dead rodents so fleas wont feed on these
+        adH <- c(which(rodents[t-1,,s]=="dr"),which(rodents[t-1,,s]=="Id")) # dead rodents so fleas wont feed on these
+        # only want to evaluate bites if not all the rodents are dead 
+        # need expression to determine if there are any dead rodents, and if so are they all of them
+        eval.bites <- TRUE
+        if(length(adH)>0){
+          eval.bites <- ifelse(length(adH)<H,TRUE,FALSE)
+        }
+        if(bites>0 & eval.bites){ # if there are bites and rodents left to bite
           # remove dead hosts from possibilty
           if(length(adH)>0){
             possible_rodents <- (1:H)[-adH]
@@ -134,9 +139,7 @@ plague.IBM <- function(params, # vector of params with names, see below
         
           } #i, end of each bites loop
 
-        } # end of if bites>0
-
-        if(bites==0){
+        } else { # if not evaluating bites
           # remain in the same class unless die or move in next lines
           fleas[t,f,s] <- fleas[t-1,f,s]
         }
@@ -234,8 +237,11 @@ out <- plague.IBM(params, # vector of params with names, see below
 )
 
 
+apply(rodents,3,mean)
 
-
+rodent.ts.list <- list()
+flea.ts.list <- list()
+for(1:n.sim){
 rodent.time.series <- data.frame(
   S = apply(rodents,1,function(x){length(which(x=="S"))}),
   L = apply(rodents,1,function(x){length(which(x=="L"))}),
@@ -253,6 +259,7 @@ flea.time.series <- data.frame(
   Ib = apply(fleas,1,function(x){length(which(x=="Ib"))}),
   df = apply(fleas,1,function(x){length(which(x=="df"))})
 )  
+
 
   
 plot.ts(rodent.time.series$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
