@@ -4,21 +4,6 @@
 ###################################################################################
 
 
-######## To work on :
-#######           # return other summaries - time series
-
-# right now, fleas can survive if no one to bite - the bite just affects transmission & and as hosts die the fleas bite on the remained and can bite the same individuals more than once a day
-
-
-##params
-params=c(alpha=1,lambdaA=0.035,lambdaB=0.20,lambdaC=0.07,b=0.4,b1=2,tau=0.39, muf=0.02, mupb=0.14,mub=0.20,
-        pep=0.03,ppb=0.11,pb=0.5, tep=1, tpb=1, tb=1, 
-        mu=0.002,sigma=0.25,gamma=0.14,epsilon=0.5)	#set parameter values
-xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0)					#beginning population size
-T = 100 # total number of days to simulate
-n.sim = 100
-
-
 plague.IBM <- function(params, # vector of params with names, see below
                        xstart, # vector of starting values with names
                        T,      # number of time steps to simulate
@@ -174,7 +159,7 @@ plague.IBM <- function(params, # vector of params with names, see below
     #### Now Simulate each rodent separately using info from flea bites above
       for (h in 1:H){
         if(rodents[t-1,h,s]=="dr"){ # if dead, stay dead
-          rodents[t,,s] <- "dr"
+          rodents[t,h,s] <- "dr"
         }
         if(rodents[t-1,h,s]=="Id"){ # if dead, stay dead
           rodents[t,h,s] <- "Id"
@@ -224,49 +209,48 @@ plague.IBM <- function(params, # vector of params with names, see below
     } # t 
   } # s
 
+  ####### Summaries to output
+  
+  rodent.ts.list <- list()
+  flea.ts.list <- list()
+  for(n in 1:n.sim){
+    rodent.time.series <- data.frame(
+      S = apply(rodents[,,n],1,function(x){length(which(x=="S"))}),
+      L = apply(rodents[,,n],1,function(x){length(which(x=="L"))}),
+      I = apply(rodents[,,n],1,function(x){length(which(x=="I"))}),
+      E = apply(rodents[,,n],1,function(x){length(which(x=="E"))}),
+      R = apply(rodents[,,n],1,function(x){length(which(x=="R"))}),
+      dr = apply(rodents[,,n],1,function(x){length(which(x=="dr"))}),
+      Id = apply(rodents[,,n],1,function(x){length(which(x=="Id"))})
+    )  
+    
+    flea.time.series <- data.frame(
+      U = apply(fleas[,,n],1,function(x){length(which(x=="U"))}),
+      Iep = apply(fleas[,,n],1,function(x){length(which(x=="Iep"))}),
+      Ipb = apply(fleas[,,n],1,function(x){length(which(x=="Ipb"))}),
+      Ib = apply(fleas[,,n],1,function(x){length(which(x=="Ib"))}),
+      df = apply(fleas[,,n],1,function(x){length(which(x=="df"))})
+    )  
+    rodent.ts.list[[n]] <- rodent.time.series
+    flea.ts.list[[n]] <- flea.time.series
+    
+  }
+  
+  rodent.ts.array<-array(as.numeric(unlist(rodent.ts.list)),dim=c(100,7,100),dimnames=list(paste("time",1:100,sep=""),c("S","L","I","E","R","dr","Id"),paste("sim",1:100,sep="")))
+  
+  flea.ts.array<-array(as.numeric(unlist(flea.ts.list)),dim=c(100,5,100),dimnames=list(paste("time",1:100,sep=""),c("U","Iep","Ipb","Ib","df"),paste("sim",1:100,sep="")))
+  
+  
+  mean.rodent.ts <- apply(rodent.ts.array,c(1,2),mean)
+  mean.flea.ts <- apply(flea.ts.array,c(1,2),mean)
+  
+  return(list(rodent.status.array=rodents, flea.status.array=fleas, rodent.ts.array=rodent.ts.array,flea.ts.array=flea.ts.array,mean.rodent.ts=mean.rodent.ts,mean.flea.ts=mean.flea.ts))
 
-  return(list(rodents, fleas))
 } #end of function
 
 
 
-out <- plague.IBM(params, # vector of params with names, see below
-                              xstart, # vector of starting values with names
-                              T,      # number of time steps to simulate
-                              n.sim  # number of simulations
-)
 
 
-apply(rodents,3,mean)
-
-rodent.ts.list <- list()
-flea.ts.list <- list()
-for(1:n.sim){
-rodent.time.series <- data.frame(
-  S = apply(rodents,1,function(x){length(which(x=="S"))}),
-  L = apply(rodents,1,function(x){length(which(x=="L"))}),
-  I = apply(rodents,1,function(x){length(which(x=="I"))}),
-  E = apply(rodents,1,function(x){length(which(x=="E"))}),
-  R = apply(rodents,1,function(x){length(which(x=="R"))}),
-  dr = apply(rodents,1,function(x){length(which(x=="dr"))}),
-  Id = apply(rodents,1,function(x){length(which(x=="Id"))})
-)  
-
-flea.time.series <- data.frame(
-  U = apply(fleas,1,function(x){length(which(x=="U"))}),
-  Iep = apply(fleas,1,function(x){length(which(x=="Iep"))}),
-  Ipb = apply(fleas,1,function(x){length(which(x=="Ipb"))}),
-  Ib = apply(fleas,1,function(x){length(which(x=="Ib"))}),
-  df = apply(fleas,1,function(x){length(which(x=="df"))})
-)  
 
 
-  
-plot.ts(rodent.time.series$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
-lines(rodent.time.series$E,col="blue",lwd=2,lty=1)
-lines(rodent.time.series$S,col="forestgreen",lwd=2,lty=1)
-lines(rodent.time.series$L,col="red",lwd=2,lty=5)
-lines(rodent.time.series$R,col="blue",lwd=2,lty=5)
-lines(rodent.time.series$Id,col="black",lwd=2,lty=1)
-legend("topright",c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1, 5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp =0.5, y.intersp =1)
-title(main="Mouse Blood, 1 CFU")
