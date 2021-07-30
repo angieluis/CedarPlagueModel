@@ -9,10 +9,13 @@
 #### I converted some of the rates to probabilities via prob= 1-exp(-rate*t)
 #### including death rates, rates of transition (mu, epsilon, lambdas, tau, gamma, etc)
 
+#### Could get more detailed parameter distributions from Joe to see how 
+#### the variability matters
+
 #### Think about whether I'm modeling t's and p's right. 
 #### Prob of transmission is per bite and all or nothing
-#### Proportion leaving to L & I is cumulative - I added probs (dose),
-#### but I should probably do 1-sum(1-doses)
+#### Proportion leaving to L & I is cumulative - I added t's like they were doses,
+#### but they are defined as probabilities, so I should probably do 1-product(1-t)
 
 
 source("IndividualBasedModel.R")
@@ -488,3 +491,39 @@ RodentsDead$CFU.100[6] <- rodent.means.rat_100CFU.BPBonly$Id[T]
 
 
 RodentsDead
+
+
+
+
+
+##################################################################
+# using comparison function
+
+
+
+params.mouse <- list(params.mouse_1CFU, params.mouse_1CFU.EPTonly, params.mouse_1CFU.BPBonly, 
+                     params.mouse_10CFU, params.mouse_10CFU.EPTonly, params.mouse_10CFU.BPBonly,
+                     params.mouse_100CFU, params.mouse_100CFU.EPTonly, params.mouse_100CFU.BPBonly)
+names(params.mouse) <- c("params.mouse_1CFU","params.mouse_1CFU.EPTonly", "params.mouse_1CFU.BPBonly", 
+                         "params.mouse_10CFU", "params.mouse_10CFU.EPTonly", "params.mouse_10CFU.BPBonly",
+                         "params.mouse_100CFU", "params.mouse_100CFU.EPTonly", "params.mouse_100CFU.BPBonly")
+
+mouse.comparisons <- print.plague.IBM(params.mouse, 
+                                      xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0),
+                                      T=100,
+                                      n.sim = 100,
+                                      plot.name="Plague IBM mouse comparison.eps")
+
+params.rat <- list(params.rat_1CFU, params.rat_1CFU.EPTonly, params.rat_1CFU.BPBonly, 
+                   params.rat_10CFU, params.rat_10CFU.EPTonly, params.rat_10CFU.BPBonly,
+                   params.rat_100CFU, params.rat_100CFU.EPTonly, params.rat_100CFU.BPBonly)
+names(params.rat) <- c("params.rat_1CFU","params.rat_1CFU.EPTonly", "params.rat_1CFU.BPBonly", 
+                       "params.rat_10CFU", "params.rat_10CFU.EPTonly", "params.rat_10CFU.BPBonly",
+                       "params.rat_100CFU", "params.rat_100CFU.EPTonly", "params.rat_100CFU.BPBonly")
+
+rat.comparisons <- print.plague.IBM(params.rat, 
+                                    xstart=c(S=9,L=0,I=1,E=0,R=0,dr=0,Id=0, U=100,Iep=0,Ipb=0,Ib=0,df=0),
+                                    T=100,
+                                    n.sim = 100,
+                                    plot.name="Plague IBM rat comparison.eps")
+

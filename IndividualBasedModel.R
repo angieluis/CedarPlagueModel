@@ -4,6 +4,12 @@
 ###################################################################################
 
 
+#### things to update:
+#### change dose to cumulative probs 1-product(1-t's)
+#### make lambda C go back to U instead of 'die'
+
+
+
 plague.IBM <- function(params, # vector of params with names, see below
                        xstart, # vector of starting values with names
                        T,      # number of time steps to simulate
@@ -251,6 +257,47 @@ plague.IBM <- function(params, # vector of params with names, see below
 
 
 
+######################### function to run and compare several scenarios as once
 
+
+print.plague.IBM <- function(params, # list of vectors of params with labels for each model
+                             xstart, 
+                             T, 
+                             n.sim, 
+                             plot=TRUE, # do you want comparison plots?, if TRUE, spit out pdf of plots in dir
+                             plot.name=NULL){ #optional name for plot pdf file
+  out <- list()
+  for(i in 1:length(params)){
+    out[[i]] <- plague.IBM(params[[i]], xstart, T, n.sim)
+  }
+  names(out) <- names(params)
+  
+  if(plot==TRUE){
+    if(length(plot.name)==0){
+      plot.name="plague.IBM.plot"
+    }
+    postscript(plot.name, horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+    par(mfrow=c(length(params)/3,3))
+    
+    for(i in 1:length(params)){
+      dat <- as.data.frame(out[[i]]$mean.rodent.ts)
+      plot.ts(dat$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
+      lines(dat$E,col="blue",lwd=2,lty=1)
+      lines(dat$S,col="forestgreen",lwd=2,lty=1)
+      lines(dat$L,col="red",lwd=2,lty=5)
+      lines(dat$R,col="blue",lwd=2,lty=5)
+      lines(dat$Id,col="black",lwd=2,lty=1)
+      legend("topright",c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1, 5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp =0.5, y.intersp =1)
+      title(main=names(params)[i])
+    }
+    
+    dev.off()
+  }
+  
+  out[[length(params)+1]] <- unlist(lapply(out,function(y){as.data.frame(y$mean.rodent.ts)$Id[dim(y$mean.rodent.ts)[1]]}))
+  names(out)[length(params)+1] <- "Infected.dead.rodents"
+    
+  return(out)
+}
 
 
