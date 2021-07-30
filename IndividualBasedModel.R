@@ -4,11 +4,6 @@
 ###################################################################################
 
 
-#### things to update:
-#### change dose to cumulative probs 1-product(1-t's)
-#### make lambda C go back to U instead of 'die'
-
-
 
 plague.IBM <- function(params, # vector of params with names, see below
                        xstart, # vector of starting values with names
@@ -66,7 +61,7 @@ plague.IBM <- function(params, # vector of params with names, see below
 
   for(s in 1:n.sim){  
     for(t in 2:T){
-      dose <- rep(0, H)
+      prob.notI <- rep(1, H) # the probability it doesn't move into L then I (will be a fxn of all bites)
 
       ###################################################################################
       ## Flea Model
@@ -95,15 +90,15 @@ plague.IBM <- function(params, # vector of params with names, see below
   
           # bites are useless unless by an infected flea on uninfected host, or from an uninfected flea on Infected host
           for(i in 1:length(status_of_bitten)){ # for each of the bites
-            if(status_of_bitten[i]=="S"){ # if rodent was uninfected, it could get infected but depends on cumulative dose, so keep track of that for the rodent model below
+            if(status_of_bitten[i]=="S"){ # if rodent was uninfected, it could get infected but depends on cumulative number of bites from different categories, so keep track of that for the rodent model below
               if(fleas[t-1,f,s]=="Iep"){
-                dose[who_bites[i]] <- min(dose[who_bites[i]] + rbinom(1,1,pep) * tep ,1)#if it transmits, it adds dose of tep
+                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-(rbinom(1,1,pep) * tep)) # prob it doesn't move to infectious trajectory is product of result of previous bites and this bite (with prob of moving to I is tep, so prob of not moving there to 1-tep)
               }
               if(fleas[t-1,f,s]=="Ipb"){
-                dose[who_bites[i]] <- min(dose[who_bites[i]] + rbinom(1,1,ppb) * tpb ,1)#if it transmits, it adds dose of tpb
+                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-(rbinom(1,1,ppb) * tpb))
               }
               if(fleas[t-1,f,s]=="Ib"){
-                dose[who_bites[i]] <- min(dose[who_bites[i]] + rbinom(1,1,pb) * tb ,1) #if it transmits, it adds dose of tb
+                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-(rbinom(1,1,pb) * tb))
               }
             }
             if(status_of_bitten[i]=="I"){ # if rodent was infected, it could transmit to uninfected flea
@@ -146,7 +141,7 @@ plague.IBM <- function(params, # vector of params with names, see below
   
         # if alive, then allow the other few movements
         if(fleas[t,f,s] == "Iep"){ # could move back to U (lambdaB) or become partially blocked (lambdaA), or leave by lambda C (consider dead here, i don't like this- need to ask Joe)
-          fleas[t,f,s] <-  sample(c("U","Ipb","dr","Iep"),1,prob=c(lambdaB,lambdaA,lambdaC,1-(lambdaA+lambdaB+lambdaC))) # definitions say rate for lambda so need to see if ok to use probs 
+          fleas[t,f,s] <-  sample(c("U","Ipb","U","Iep"),1,prob=c(lambdaB,lambdaA,lambdaC,1-(lambdaA+lambdaB+lambdaC))) # definitions say rate for lambda so need to see if ok to use probs 
         }
         if(fleas[t,f,s] == "Ipb"){ # could move into fully blocked
           fleas[t,f,s] <- ifelse(rbinom(1,1,prob=tau),"Ib","Ipb") # right now using probability but may want to look at how long have been here in this class instead
@@ -170,16 +165,16 @@ plague.IBM <- function(params, # vector of params with names, see below
         if(rodents[t-1,h,s]=="Id"){ # if dead, stay dead
           rodents[t,h,s] <- "Id"
         }
-        if(rodents[t-1,h,s]=="S"){ # if was susceptible, check that it survived, then check for cumulative infectious dose from bites
+        if(rodents[t-1,h,s]=="S"){ # if was susceptible, check that it survived, then check for cumulative infectious prob from bites
           die <- rbinom(1,1,mu)
           if(die==1){
             rodents[t,h,s] <- "dr"
           }else{
-            if(dose[h]==0){
+            if(prob.notI[h]==1){
               rodents[t,h,s] <- "S"
             }
-            if(dose[h]>0){
-              rodents[t,h,s] <- ifelse(rbinom(1,1,prob=dose[h]),"L", "E")
+            if(prob.notI[h]<1){
+              rodents[t,h,s] <- ifelse(rbinom(1,1,prob=(1-prob.notI[h])),"L", "E")
             }
           }
         } # end S
