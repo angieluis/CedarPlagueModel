@@ -276,7 +276,7 @@ print.plague.IBM <- function(params, # list of vectors of params with labels for
     
     for(i in 1:length(params)){
       dat <- as.data.frame(out[[i]]$mean.rodent.ts)
-      plot.ts(dat$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,max(10)),lty=1)
+      plot.ts(dat$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,sum(dat[1,])),lty=1)
       lines(dat$E,col="blue",lwd=2,lty=1)
       lines(dat$S,col="forestgreen",lwd=2,lty=1)
       lines(dat$L,col="red",lwd=2,lty=5)
