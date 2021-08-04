@@ -3,6 +3,13 @@
 ##  based on Cedar & Joe's model and data
 ###################################################################################
 
+### add calculation of R0. How many fleas (& who) does the first I transmit to. Then track
+### those fleas and see how many hosts they infect (that make it to I).
+
+# If who_bites==1 & status_of_bitten == "I" & fleas[t,f,s] <- "Iep", then keep track
+# of that flea [f] & who it infects unless it dies or moves back to "U".
+# keep vector of fleas.for.R0 to watch, but need to remove those that go back to U from Iep
+# keep vector of L.for.R0 to track who those infect and if they survive to I
 
 
 plague.IBM <- function(params, # vector of params with names, see below
@@ -55,11 +62,17 @@ plague.IBM <- function(params, # vector of params with names, see below
   rodents <- array(data=NA, dim=c(T,H,n.sim))
   fleas   <- array(data=NA, dim=c(T,F,n.sim))
 
-  rodents[1,,] <- sample(c(rep("S",S),rep("L",L),rep("I",I),rep("E",E),rep("R",R))) 
+  rodents[1,,] <- c(rep("I",I),rep("S",S),rep("L",L),rep("E",E),rep("R",R)) # infected first
   fleas[1,,] <- sample( c(rep("U",U),rep("Iep",Iep),rep("Ipb",Ipb),rep("Ib",Ib)))
 
+  R0 <- rep(0,n.sim)
 
   for(s in 1:n.sim){  
+    
+    fleas.for.R0 <-numeric() # keep track of the fleas that the first I infects
+    S.to.watch <- numeric() # keep track of S's bitten by fleas to watch
+    L.for.R0 <- numeric() # keep track of hosts that become L from those fleas
+    
     for(t in 2:T){
       prob.notI <- rep(1, H) # the probability it doesn't move into L then I (will be a fxn of all bites)
 
@@ -88,18 +101,29 @@ plague.IBM <- function(params, # vector of params with names, see below
           who_bites <- sample(possible_rodents,bites,replace=TRUE) # which rodents are these bites on? Draw from those that are alive - assumes the same flea could bite the same host more than once
           status_of_bitten <- rodents[t-1,who_bites,s] # what class(es) are the bitten rodents in
   
+          # if who_bites is #1 and status_of_bitten is I, then need to track it for R0.
+          
           # bites are useless unless by an infected flea on uninfected host, or from an uninfected flea on Infected host
           for(i in 1:length(status_of_bitten)){ # for each of the bites
             if(status_of_bitten[i]=="S"){ # if rodent was uninfected, it could get infected but depends on cumulative number of bites from different categories, so keep track of that for the rodent model below
+              prob.t <- 0
               if(fleas[t-1,f,s]=="Iep"){
-                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-(rbinom(1,1,pep) * tep)) # prob it doesn't move to infectious trajectory is product of result of previous bites and this bite (with prob of moving to I is tep, so prob of not moving there to 1-tep)
+                prob.t <- (rbinom(1,1,pep) * tep)
+                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-prob.t) # prob it doesn't move to infectious trajectory is product of result of previous bites and this bite (with prob of moving to I is tep, so prob of not moving there to 1-tep)
               }
               if(fleas[t-1,f,s]=="Ipb"){
-                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-(rbinom(1,1,ppb) * tpb))
+                prob.t <- (rbinom(1,1,ppb) * tpb)
+                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-prob.t)
               }
               if(fleas[t-1,f,s]=="Ib"){
-                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-(rbinom(1,1,pb) * tb))
+                prob.t <- (rbinom(1,1,pb) * tb)
+                prob.notI[who_bites[i]] <- prob.notI[who_bites[i]] * (1-prob.t)
               }
+              # if some prob of transmission & if this flea is in the vector to watch, keep track for R0
+              if(prob.t>0 & length(which(fleas.for.R0==f))>0){
+                S.to.watch <- c(S.to.watch, who_bites[i])
+              }
+              
             }
             if(status_of_bitten[i]=="I"){ # if rodent was infected, it could transmit to uninfected flea
               if(fleas[t-1,f,s]=="U"){
@@ -112,9 +136,14 @@ plague.IBM <- function(params, # vector of params with names, see below
                 }
                 if(is.na(fleas[t,f,s])){
                   fleas[t,f,s] <- ifelse(rbinom(1,1,alpha), "Iep", "U")
+                  # if the flea just moved to Iep phase and was bitten by first infected rodent, start tracking it for R0 (if not already)
+                  if(fleas[t,f,s]=="Iep" & who_bites[i]==1){
+                    fleas.for.R0 <- unique(c(fleas.for.R0,f))
+                  }
+                  
                 }
-              }
-            }
+              } #if "U"
+            } # if bit "I"
             if(status_of_bitten[i]!="I"){ # if didn't bite an infected, then stay where you are
               fleas[t,f,s] <- fleas[t-1,f,s] 
             }
@@ -140,8 +169,14 @@ plague.IBM <- function(params, # vector of params with names, see below
         fleas[t,f,s] <- ifelse(rbinom(1,1,prob=prob.die), "df", fleas[t,f,s])
   
         # if alive, then allow the other few movements
-        if(fleas[t,f,s] == "Iep"){ # could move back to U (lambdaB) or become partially blocked (lambdaA), or leave by lambda C (consider dead here, i don't like this- need to ask Joe)
+        if(fleas[t,f,s] == "Iep"){ # could move back to U (lambdaB+lambdaC) or become partially blocked (lambdaA)
           fleas[t,f,s] <-  sample(c("U","Ipb","U","Iep"),1,prob=c(lambdaB,lambdaA,lambdaC,1-(lambdaA+lambdaB+lambdaC))) # definitions say rate for lambda so need to see if ok to use probs 
+        
+          if(fleas[t,f,s]=="U"){ # if the flea moved back to U
+            if(length(which(fleas.for.R0==f))>0){ # & if the flea was already in the fleas Ro vector, remove it
+              fleas.for.R0 <- fleas.for.R0[which(fleas.for.R0==f)]
+            }
+          }
         }
         if(fleas[t,f,s] == "Ipb"){ # could move into fully blocked
           fleas[t,f,s] <- ifelse(rbinom(1,1,prob=tau),"Ib","Ipb") # right now using probability but may want to look at how long have been here in this class instead
@@ -175,6 +210,9 @@ plague.IBM <- function(params, # vector of params with names, see below
             }
             if(prob.notI[h]<1){
               rodents[t,h,s] <- ifelse(rbinom(1,1,prob=(1-prob.notI[h])),"L", "E")
+              if(length(which(S.to.watch==h))>0 & rodents[t,h,s]=="L"){ # keep track for R0 if in watch vector
+                L.for.R0 <- unique(c(L.for.R0, h))
+              }
             }
           }
         } # end S
@@ -185,6 +223,9 @@ plague.IBM <- function(params, # vector of params with names, see below
             rodents[t,h,s] <- "dr"
           }else{
             rodents[t,h,s] <- ifelse(rbinom(1,1,prob=sigma), "I", "L")
+          }
+          if(rodents[t,h,s]=="I" & length(which(L.for.R0==h))>0){
+            R0[s] <- R0[s]+1 #add to R0
           }
         } # end L
     
@@ -245,7 +286,8 @@ plague.IBM <- function(params, # vector of params with names, see below
   mean.rodent.ts <- apply(rodent.ts.array,c(1,2),mean)
   mean.flea.ts <- apply(flea.ts.array,c(1,2),mean)
   
-  return(list(rodent.status.array=rodents, flea.status.array=fleas, rodent.ts.array=rodent.ts.array,flea.ts.array=flea.ts.array,mean.rodent.ts=mean.rodent.ts,mean.flea.ts=mean.flea.ts))
+  
+  return(list(rodent.status.array=rodents, flea.status.array=fleas, rodent.ts.array=rodent.ts.array,flea.ts.array=flea.ts.array,mean.rodent.ts=mean.rodent.ts,mean.flea.ts=mean.flea.ts,R0=R0))
 
 } #end of function
 
