@@ -294,7 +294,7 @@ plague.IBM <- function(params, # vector of params with names, see below
 
 
 
-######################### function to run and compare several scenarios as once
+######################### function to run and compare several scenarios at once
 
 
 print.plague.IBM <- function(params, # list of vectors of params with labels for each model

@@ -12,10 +12,8 @@
 #### Could get more detailed parameter distributions from Joe to see how 
 #### the variability matters
 
-#### Think about whether I'm modeling t's and p's right. 
-#### Prob of transmission is per bite and all or nothing
-#### Proportion leaving to L & I is cumulative - I added t's like they were doses,
-#### but they are defined as probabilities, so I should probably do 1-product(1-t)
+#### Updated the model. Joe thinks I'm modeling t's and p's right. Prob of transmission (p) is per bite and all or nothing
+#### Proportion leaving to L & I (t) is cumulative prob, so it is 1-product(1-t)
 
 
 source("IndividualBasedModel.R")
@@ -514,6 +512,13 @@ mouse.comparisons <- print.plague.IBM(params.mouse,
                                       n.sim = 100,
                                       plot.name="Plague IBM mouse comparison.eps")
 
+mouse.comparisons.100r <- print.plague.IBM(params.mouse, 
+                                      xstart=c(S=90,L=0,I=10,E=0,R=0,dr=0,Id=0, U=1000,Iep=0,Ipb=0,Ib=0,df=0),
+                                      T=100,
+                                      n.sim = 100,
+                                      plot.name="Plague IBM mouse comparison, 100 mice.eps")
+
+
 params.rat <- list(params.rat_1CFU, params.rat_1CFU.EPTonly, params.rat_1CFU.BPBonly, 
                    params.rat_10CFU, params.rat_10CFU.EPTonly, params.rat_10CFU.BPBonly,
                    params.rat_100CFU, params.rat_100CFU.EPTonly, params.rat_100CFU.BPBonly)
@@ -527,3 +532,9 @@ rat.comparisons <- print.plague.IBM(params.rat,
                                     n.sim = 100,
                                     plot.name="Plague IBM rat comparison.eps")
 
+# 10 times the population size: 100 rodents (10 infected), 1000 fleas
+rat.comparisons.100r <- print.plague.IBM(params.rat, 
+                                    xstart=c(S=90,L=0,I=10,E=0,R=0,dr=0,Id=0, U=1000,Iep=0,Ipb=0,Ib=0,df=0),
+                                    T=100,
+                                    n.sim = 100,
+                                    plot.name="Plague IBM rat comparison, 100 rats.eps")
