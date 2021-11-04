@@ -57,11 +57,11 @@ SIR.model.fleasperhost.cumbites=function(t,x,params){
   dr = mu*H + epsilon*I  #dead rodents
   Id = epsilon*I
   
-  dU=-I*(U*b*alpha)/H + Iep*lambdaB - U*muf    #Uninfected Flea pop
+  dU=-I*(U*b*alpha)/H + Iep*(lambdaB + lambdaC) - U*muf    #Uninfected Flea pop
   dIep=I*U*b*alpha/H - (Iep*lambdaB + Iep*lambdaC + Iep*lambdaA + Iep*muf) #Infection of early phase fleas 
   dIpb=Iep*lambdaA - Ipb*(tau+mupb) #Infection of partially blocked fleas
   dIb=tau*Ipb - mub*Ib  #Infection of fully blocked fleas
-  df=muf*(U+Iep) + mupb*Ipb + mub*Ib+Iep*lambdaC #dead fleas
+  df=muf*(U+Iep) + mupb*Ipb + mub*Ib  #dead fleas
   
   
   
@@ -95,18 +95,31 @@ print.plague.SIRmodel <- function(model = SIR.model.fleasperhost.cumbites,
     if(length(plot.name)==0){
       plot.name="plague.IBM.plot"
     }
-    postscript(plot.name, horizontal = FALSE, onefile = FALSE, paper = "special", height = 7, width = 11)
+    pdf(plot.name, onefile = TRUE, paper = "special", height = 7, width = 11)
     par(mfrow=c(length(params)/3,3))
     
     for(i in 1:length(params)){
       dat <- as.data.frame(out[[i]])
-      plot.ts(dat$I,ylab="Abundance",xlab="Time",type="l",col="red",lwd=2,ylim=c(0,sum(dat[1,])),lty=1)
-      lines(dat$E,col="blue",lwd=2,lty=1)
-      lines(dat$S,col="forestgreen",lwd=2,lty=1)
-      lines(dat$L,col="red",lwd=2,lty=5)
-      lines(dat$R,col="blue",lwd=2,lty=5)
-      lines(dat$Id,col="black",lwd=2,lty=1)
+      plot(dat$time,dat$I,ylab="Abundance",xlab="Time (days)",type="l",col="red",lwd=2,ylim=c(0,sum(dat[1,2:8])),lty=1)
+      lines(dat$time,dat$E,col="blue",lwd=2,lty=1)
+      lines(dat$time,dat$S,col="forestgreen",lwd=2,lty=1)
+      lines(dat$time,dat$L,col="red",lwd=2,lty=5)
+      lines(dat$time,dat$R,col="blue",lwd=2,lty=5)
+      lines(dat$time,dat$Id,col="black",lwd=2,lty=1)
       legend("topright",c("Susceptible", "Latent", "Infectious","Exposed", "Recovered", "Infected-dead"),col=c("forestgreen","red", "red","blue", "blue", "black"),bty="n",lty=c(1, 5, 1, 1, 5, 1),lwd=2,seg.len=2.0,x.intersp =0.5, y.intersp =1)
+      title(main=names(params)[i])
+    }
+    
+    par(mfrow=c(length(params)/3,3))
+    
+    for(i in 1:length(params)){
+      dat <- as.data.frame(out[[i]])
+      plot(dat$time,dat$U,ylab="Abundance",xlab="Time (days)",type="l",col="blue",lwd=2,ylim=c(0,sum(dat[1,9:13])),lty=1)
+      lines(dat$time,dat$Iep,col="forestgreen",lwd=2,lty=1)
+      lines(dat$time,dat$Ipb,col="magenta",lwd=2,lty=1)
+      lines(dat$time,dat$Ib,col="red",lwd=2,lty=1)
+      lines(dat$time,dat$df,col="black",lwd=2,lty=5)
+      legend("topright",c("U", "Iep", "Ipb","Ib", "dead"),col=c("blue","forestgreen","magenta", "red", "black"),bty="n",lty=c(1, 1, 1, 1, 5),lwd=2,seg.len=2.0,x.intersp =0.5, y.intersp =1)
       title(main=names(params)[i])
     }
     
