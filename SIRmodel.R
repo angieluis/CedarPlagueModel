@@ -49,11 +49,11 @@ SIR.model=function(t,x,params){
   dr=mu*(S+R+E+L+I) + epsilon*I  #dead rodents
   Id=epsilon*I
   
-  dU=-I*(U*b*alpha) + Iep*lambdaB - U*muf    #Uninfected Flea pop
+  dU=-I*(U*b*alpha) + Iep*lambdaB + Iep*lambdaC - U*muf    #Uninfected Flea pop
   dIep=I*U*b*alpha - (Iep*lambdaB + Iep*lambdaC + Iep*lambdaA + Iep*muf) #Infection of early phase fleas 
   dIpb=Iep*lambdaA - Ipb*(tau+mupb) #Infection of partially blocked fleas
   dIb=tau*Ipb - mub*Ib  #Infection of fully blocked fleas
-  df=muf*(U+Iep) + mupb*Ipb + mub*Ib+Iep*lambdaC #dead fleas
+  df=muf*(U+Iep) + mupb*Ipb + mub*Ib #dead fleas
   
   
   
@@ -117,11 +117,11 @@ SIR.model.fleasperhost=function(t,x,params){
   dr = mu*H + epsilon*I  #dead rodents
   Id = epsilon*I
   
-  dU=-I*(U*b*alpha)/H + Iep*lambdaB - U*muf    #Uninfected Flea pop
+  dU=-I*(U*b*alpha)/H + Iep*lambdaB + Iep*lambdaC - U*muf    #Uninfected Flea pop
   dIep=I*U*b*alpha/H - (Iep*lambdaB + Iep*lambdaC + Iep*lambdaA + Iep*muf) #Infection of early phase fleas 
   dIpb=Iep*lambdaA - Ipb*(tau+mupb) #Infection of partially blocked fleas
   dIb=tau*Ipb - mub*Ib  #Infection of fully blocked fleas
-  df=muf*(U+Iep) + mupb*Ipb + mub*Ib+Iep*lambdaC #dead fleas
+  df=muf*(U+Iep) + mupb*Ipb + mub*Ib #dead fleas
   
   
   
