@@ -1,0 +1,211 @@
+---
+title: "Calculating R0 for Plague Model (not cumulative bites)"
+author: "Angie Luis"
+date: "4/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("SIRmodel_fleasperhost.R")
+#source("RunSIRmodel_fleasperhost.R")
+```
+
+## The Plague model
+
+The final model used in the paper (without cumulative bites) and fleas per host.
+
+The vertebrate (rodent) equations are:
+
+
+\begin{eqnarray}
+ 
+  
+&& \frac{dS}{dt}=-S(b I_{ep} p_{ep} + b I_{pb} p_{pb} + b_1 I_b p_b)/H - \mu S \\ 
+
+&& \frac{dL}{dt}= S(b I_{ep} p_{ep} t_{ep} + b I_{pb} p_{pb} t_{pb} + b_1 I_b p_b t_b)/H - \sigma L - \mu L \\
+&& \frac{dI}{dt}= \sigma L - I(\mu+\epsilon)  \\
+&& \frac{dE}{dt} = S(b I_{ep} p_{ep} (1-t_{ep}) + b I_{pb} p_{pb} (1-t_{pb}) + b_1 I_b p_b (1-t_b))/H - E(\mu+\gamma) \\
+&& \frac{dR}{dt} = \gamma E - R \mu \\
+ 
+\end{eqnarray}
+
+
+The flea equations are:
+
+
+\begin{eqnarray}
+ 
+  
+&& \frac{dU}{dt}=-IU b \alpha /H + I_{ep}(\lambda_B + \lambda_C) - U \mu_f   \\
+&& \frac{dI_{ep}}{dt}=I U b \alpha /H - I_{ep} (\lambda_B + \lambda_C + \lambda_A + \mu_f)  \\ 
+&& \frac{dI_{pb}}{dt}=I_{ep} \lambda_A - I_{pb}(\tau+\mu_{pb}) \\
+&& \frac{dI_b}{dt}= \tau I_{pb} - \mu_b I_b \\
+
+\end{eqnarray}  
+
+## Calculating $R_0$ 
+
+$R_0$ is dominant eigenvalue of the next generation matrix (NGM) at the disease-free equilibrium. To calculate the NGM, you need to calculate the transmission matrix, $T$, and multiply it by the negative inverse of the transition matrix,$-\Sigma ^{-1}$. $T$ and $\Sigma$ are Jacobians - matrices of partial derivatives of the relevant equations at their disease-free equilibrium (described below) with respect to each of the infected classes, but only including the terms that describe new infections (transmission matrix, $T$) or transition between infected classes (transition matrix, $\Sigma$).
+
+
+The relevant equations (those that describe production of new infecteds and changes in already infecteds) of the Plague model at the disease-free equilibrium ($S=H$) are:
+
+\begin{eqnarray}
+
+&& \frac{dL\prime}{dt}=(b\cdot I_{ep}\cdot p_{ep}\cdot t_{ep} + b\cdot I_{pb}\cdot p_{pb}\cdot t_{pb} + b_1\cdot I_b p_b\cdot t_b) -\sigma\cdot L - \mu\cdot L \\
+&& \frac{dI\prime}{dt}= \sigma\cdot L -I\cdot(\mu+\epsilon) \\
+&& \frac{dI_{ep}\prime}{dt}= I\cdot U \cdot b \cdot \alpha/H - I_{ep}(\lambda_A + \lambda_B +\lambda_C + \mu_f) \\
+&& \frac{dI_{pb}\prime}{dt}= I_{ep}\cdot\lambda_A - I_{pb}\cdot(\tau+\mu_{pb})  \\
+&& \frac{dI_{b}\prime}{dt}= \tau \cdot I_{pb} - \mu_{b} \cdot I_b \\
+
+\end{eqnarray}
+
+For the the transmission matrix, $T$, we need to take partial derivatives but only of the parts of the equations that describe new transmissions (not transitions from other infected classes - that will go in $\Sigma$). $T$ will contain partial derivatives of that part of each equation above with respect to each variable. The order I will go in is $L$, $I$, $I_{ep}$, $I_{pb}$, $I_b$.  For instance, in row 1, column 1, is the derivative of the transmission part of $\frac{dL\prime}{dt}$ which is $(b\cdot I_{ep}\cdot p_{ep}\cdot t_{ep} + b\cdot I_{pb}\cdot p_{pb}\cdot t_{pb} + b_1\cdot I_b p_b\cdot t_b)$,with respect to $L$, which is 0. (There is no $L$ in the expression.) Row 1, column 3 is the derivative of that expression with respect to $I_{ep}$.
+
+
+$$
+T = \begin{pmatrix}
+0 & 0 & b\cdot  p_{ep}\cdot t_{ep} & b\cdot p_{pb}\cdot t_{pb} & b_1\cdot p_b\cdot t_b\\
+0 & 0 & 0 & 0 & 0\\
+0 & U\cdot b\cdot \alpha /H & 0 & 0 & 0\\
+0 & 0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0 & 0\\
+\end{pmatrix}
+$$
+
+Now, to calculate the transition matrix, $\Sigma$, we take the parts of the equations at the disease free equilibrium that relate to transitions between and out of disease states, and take their partial derivatives with respect to each variable. For example the transition part of $\frac{dL\prime}{dt}$ is $-\sigma\cdot L - \mu\cdot L$ because it describes transition out of the L state. For the first row, first column of $\Sigma$, I take the partial derivative of that part of the equation, with respect to $L$, which is $-(\sigma+\mu)$, and so on.
+
+
+$$
+\Sigma = \begin{pmatrix}
+-(\sigma + \mu) & 0 & 0 & 0 & 0\\
+\sigma & -(\mu+\epsilon) & 0 & 0 & 0\\
+0 & 0 & -(\lambda_A + \lambda_B + \lambda_c + \mu_f) & 0 & 0\\
+0 & 0 & \lambda_A & -(\tau+\mu_{pb}) & 0\\
+0 & 0 & 0 & \tau & -\mu_b\\
+\end{pmatrix}
+$$
+
+I used the rSymPy package to calculate the the negative inverse of $\Sigma$, then multiplied that by $T$ to get the next generation matrix (NGM). Then found the dominant eigenvalue of NGM to get $R_0$. I did this on my older computer after a lot of hassle to get the package installed, and the rSymPy package won't install on my new computer. But see code. Here, $m$, is the vector to host ratio: $U/H$.
+
+```{r sympy, eval=FALSE, include=FALSE}
+
+library(Ryacas)
+
+#### haven't figured this out yet - 
+Sigma <- expression(list(list(-(sigma + mu),0,0,0,0),
+list(sigma , -(mu+epsilon) , 0 , 0 , 0),
+list(0 , 0 , -(lambdaA + lambdaB + lambdac + muf) , 0 , 0),
+list(0 , 0 ,  lambdaA , -(tau+mupb) , 0),
+list(0 , 0 , 0 , tau,  -mub)))
+
+Sig <- ysym(Sigma)
+
+
+##################################################### Code from before on old computer
+library(rSymPy)
+
+b <- Var("b")
+b1  <- Var("b1")
+S <- Var("S")
+H <- Var("H")
+tep <- Var("tep")
+pep <- Var("pep")
+Iep <- Var("Iep")
+tpb <- Var("tpb")
+ppb <- Var("ppb")
+Ipb <- Var("Ipb")
+tb <- Var("tb")
+pb <- Var("pb")
+Ib <- Var("Ib")
+U <- Var("U")
+alpha <- Var("alpha")
+I <- Var("I")
+sigma <- Var("sigma")
+mu <- Var("mu")
+epsilon <- Var("epsilon")
+lambdaA <- Var("lambdaA")
+lambdaB <- Var("lambdaB")
+lambdaC <- Var("lambdaC")
+muf <- Var("muf")
+tau <- Var("tau")
+mupb <- Var("mupb")
+mub <- Var("mub")
+m <- Var("m") # U/H # vector to host ratio
+
+#save a new variable called Ltrans to the sympy workspace, which is not the main workspace (it's annoying)
+sympy("Ltrans = (b*Iep*pep*tep + b*Ipb*ppb*tpb + b1*Ib*pb*tb)")
+
+sympy("T_L_Iep = diff(Ltrans,Iep,1)")
+sympy("T_L_Ipb = diff(Ltrans,Ipb,1)")
+sympy("T_L_Ib = diff(Ltrans,Ib,1)")
+sympy("T_Iep_I = diff(I*m*b*alpha,I,1)")
+
+# transmission matrix, T
+cat(sympy("T = Matrix([[0,0,T_L_Iep,T_L_Ipb,T_L_Ib], 
+          [0,0,0,0,0],
+          [0,T_Iep_I,0,0,0],
+          [0,0,0,0,0],
+          [0,0,0,0,0]])"),"\n") # each row of a matrix is a different List
+
+
+
+sympy("E_L_L = -(sigma+mu)")
+sympy("E_I_L = sigma")
+sympy("E_I_I = -(mu+epsilon)")
+sympy("E_Iep_Iep = -(lambdaA+lambdaB+lambdaC+muf)")
+sympy("E_Ipb_Iep = lambdaA")
+sympy("E_Ipb_Ipb = -(tau+mupb)")
+sympy("E_Ib_Ipb = tau")
+sympy("E_Ib_Ib = -mub")
+
+## transition matrix E (Sigma)
+cat(sympy("E = Matrix([[E_L_L,0,0,0,0],
+      [E_I_L,E_I_I,0,0,0],
+      [0,0,E_Iep_Iep,0,0],
+      [0,0,E_Ipb_Iep,E_Ipb_Ipb,0],
+      [0,0,0,E_Ib_Ipb,E_Ib_Ib]])"),"\n")
+
+
+Sym("NegInvE = -E.inv()") # take the negative inverse of E
+
+
+sympy("NGM = T*NegInvE")
+Sym("R0 = NGM.eigenvals()")
+# [1] "{-(-alpha*m*pep*sigma*tep*b**2/((-epsilon - mu)*(-mu - sigma)*(-lambdaA - lambdaB - lambdaC - muf)) + alpha*lambdaA*m*ppb*sigma*tpb*b**2/((-epsilon - mu)*(-mu - sigma)*(-mupb - tau)*(-lambdaA - lambdaB - lambdaC - muf)) + alpha*b*b1*lambdaA*m*pb*sigma*tau*tb/(mub*(-epsilon - mu)*(-mu - sigma)*(-mupb - tau)*(-lambdaA - lambdaB - lambdaC - muf)))**(1/2): 1, 0: 3, (-alpha*m*pep*sigma*tep*b**2/((-epsilon - mu)*(-mu - sigma)*(-lambdaA - lambdaB - lambdaC - muf)) + alpha*lambdaA*m*ppb*sigma*tpb*b**2/((-epsilon - mu)*(-mu - sigma)*(-mupb - tau)*(-lambdaA - lambdaB - lambdaC - muf)) + alpha*b*b1*lambdaA*m*pb*sigma*tau*tb/(mub*(-epsilon - mu)*(-mu - sigma)*(-mupb - tau)*(-lambdaA - lambdaB - lambdaC - muf)))**(1/2): 1}"
+
+## tried both the first expression and the second (non-zero) expression, and the first one gives negative number, the second is the same positive number. So going with second.
+
+# can't get the below expression to work unless restart session, because it wants it to be a sympy object
+# .rs.restartR()
+
+
+
+
+R0.origmodel.function <- function(params, m ){
+  R0 <- with(as.list(params),
+             (-alpha*m*pep*sigma*tep*b^2/((-epsilon - mu)*(-mu - sigma)*(-lambdaA - lambdaB - lambdaC - muf)) + alpha*lambdaA*m*ppb*sigma*tpb*b^2/((-epsilon - mu)*(-mu - sigma)*(-mupb - tau)*(-lambdaA - lambdaB - lambdaC - muf)) + alpha*b*b1*lambdaA*m*pb*sigma*tau*tb/(mub*(-epsilon - mu)*(-mu - sigma)*(-mupb - tau)*(-lambdaA - lambdaB - lambdaC - muf)))^(1/2)
+             
+             )
+  return(R0)
+}
+
+
+```
+
+
+$$
+R_0 = (-\alpha\cdot m\cdot p_{ep}\cdot \sigma\cdot tep\cdot b^2/((-\epsilon - \mu)\cdot (\mu - \sigma)\cdot (-\lambda_A - \lambda_B - \lambda_C - \mu_f)) + \\
+\alpha\cdot \lambda_A\cdot m\cdot p_{pb}\cdot \sigma\cdot t_{pb}\cdot b^2/((-\epsilon - \mu)\cdot (-\mu - \sigma)\cdot (-\mu_{p}b - \tau)\cdot (-\lambda_A - \lambda_B - \lambda_C - \mu_f)) + \\
+\alpha\cdot b\cdot b1\cdot \lambda_A\cdot m\cdot p_b\cdot \sigma\cdot \tau\cdot t_b/(\mu_b\cdot (-\epsilon - \mu)\cdot (-\mu - \sigma)\cdot (-\mu_{pb} - \tau)\cdot (-\lambda_A - \lambda_B - \lambda_C - \mu_f)))^{1/2}
+$$
+
+
+```{r cars}
+## some output including the code... 
+## show some plots exploring how m=(V/H) affects R0.
+```
+
+
+
